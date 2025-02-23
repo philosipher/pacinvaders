@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ping Pong Game</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #1a1a1a;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            touch-action: none;
+        }
+        #menu {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #fff;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 10;
+        }
+        #menu button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 16px;
+            background-color: #ff69b4;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: white;
+        }
+        #menu button:hover {
+            background-color: #ff1493;
+        }
+        #gameCanvas {
+            display: none;
+            border: 2px solid #00ff00;
+            background-color: #000;
+            max-width: 100vw;
+            max-height: 70vh; /* Adjusted for mobile */
+            width: 100%;
+            height: auto;
+            touch-action: none;
+        }
+        #controls {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            z-index: 5;
+            display: none;
+        }
+        #controls button {
+            padding: 5px 10px;
+            margin: 2px;
+            font-size: 14px;
+            background-color: #00ced1;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: white;
+        }
+        #controls button:hover {
+            background-color: #008b8b;
+        }
+    </style>
+</head>
+<body>
+    <div id="menu">
+        <h1>Ping Pong</h1>
+        <button id="startBtn">Start Game</button><br>
+        <button id="exitBtn">Exit</button>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+    <div id="controls">
+        <button id="pauseBtn">Pause</button>
+        <button id="menuBtn">Menu</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const menu = document.getElementById('menu');
+        const startBtn = document.getElementById('startBtn');
+        const exitBtn = document.getElementById('exitBtn');
+        const controls = document.getElementById('controls');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const menuBtn = document.getElementById('menuBtn');
+
+        // Responsive canvas sizing
+        function resizeCanvas() {
+            const maxWidth = window.innerWidth * 0.95; // 95% of viewport width
+            const maxHeight = window.innerHeight * 0.7; // 70% of viewport height
+            const aspectRatio = 2 / 1; // Maintain 2:1 ratio
+            canvas.width = Math.min(maxWidth, maxHeight * aspectRatio);
+            canvas.height = canvas.width / aspectRatio;
+            canvas.style.width = `${canvas.width}px`;
+            canvas.style.height = `${canvas.height}px`;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas(); // Initial sizing
+
+        let ball = { x: canvas.width / 2, y: canvas.height / 2, dx: 5, dy: 5, radius: 10 };
+        let paddle1 = { y: canvas.height / 2 - 50, height: 100, width: 20, speed: 15 };
+        let paddle2 = { y: canvas.height / 2 - 50, height: 100, width: 20, speed: 5 };
+        let score1 = 0, score2 = 0;
+        let level = 1;
+        let aiDifficulty = 0.5;
+        let isPaused = false;
+        let gameLoop;
+        let textY = canvas.height / 2, textDy = 1, textScale = 1, textScaleDir = 0.02;
+        let paddle1MoveUp = false, paddle1MoveDown = false;
+        let lastScorer = null;
+        let levelTransition = false;
+
+        // Background particles adjusted for canvas size
+        let particles = [];
+        for (let i = 0; i < 50; i++) {
+            particles.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                radius: Math.random() * 3 + 1,
+                dx: (Math.random() - 0.5) * 2,
+                dy: (Math.random() - 0.5) * 2,
+                color: `hsl(${Math.random() * 360}, 100%, 50%)`
+            });
+        }
+
+        function startGame() {
+            console.log('Start button clicked');
+            menu.style.display = 'none';
+            canvas.style.display = 'block';
+            controls.style.display = 'block';
+            if (gameLoop) clearInterval(gameLoop);
+            gameLoop = setInterval(updateGame, 1000 / 60);
+            score1 = score2 = 0;
+            level = 1;
+            aiDifficulty = 0.5;
+            resetBall();
+        }
+
+        function exitGame() {
+            console.log('Exit button clicked');
+            window.close();
+        }
+
+        function togglePause() {
+            console.log('Pause button clicked, new state:', !isPaused);
+            isPaused = !isPaused;
+            if (!isPaused && !gameLoop) {
+                gameLoop = setInterval(updateGame, 1000 / 60);
+            } else if (isPaused && gameLoop) {
+                clearInterval(gameLoop);
+                gameLoop = null;
+            }
+        }
+
+        function showMenu() {
+            console.log('Menu button clicked');
+            isPaused = true;
+            if (gameLoop) {
+                clearInterval(gameLoop);
+                gameLoop = null;
+            }
+            menu.style.display = 'block';
+            canvas.style.display = 'block';
+            controls.style.display = 'block';
+        }
+
+        startBtn.addEventListener('click', startGame);
+        exitBtn.addEventListener('click', exitGame);
+        pauseBtn.addEventListener('click', togglePause);
+        menuBtn.addEventListener('click', showMenu);
+
+        // Improved touch controls
+        let touchY = null;
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            touchY = touch.clientY - rect.top;
+        });
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            touchY = touch.clientY - rect.top;
+            paddle1.y = Math.max(0, Math.min(canvas.height - paddle1.height, touchY - paddle1.height / 2));
+        });
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            touchY = null;
+        });
+
+        // Keyboard controls (for desktop)
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'w' || e.key === 'W') paddle1MoveUp = true;
+            if (e.key === 's' || e.key === 'S') paddle1MoveDown = true;
+        });
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'w' || e.key === 'W') paddle1MoveUp = false;
+            if (e.key === 's' || e.key === 'S') paddle1MoveDown = false;
+        });
+
+        function updateLevel() {
+            const newLevel = Math.floor(score1 / 5) + 1;
+            if (newLevel > level) {
+                level = newLevel;
+                aiDifficulty = Math.min(10, 0.5 + level * 0.5);
+                levelTransition = true;
+                isPaused = true;
+                console.log('Level Up! Simulated sound: *ding*');
+                setTimeout(() => {
+                    isPaused = false;
+                    levelTransition = false;
+                    resetBall();
+                }, 1500);
+            }
+        }
+
+        function updateGame() {
+            if (isPaused) return;
+
+            // Paddle movement
+            if (paddle1MoveUp) paddle1.y -= paddle1.speed;
+            if (paddle1MoveDown) paddle1.y += paddle1.speed;
+
+            // AI movement
+            const aiReactionTime = Math.max(0.05, 0.3 - (aiDifficulty * 0.025));
+            const aiAccuracy = Math.random() < (0.5 + aiDifficulty * 0.045);
+            const targetY = aiAccuracy ? ball.y : ball.y + (Math.random() * 150 - 75);
+            paddle2.y += (targetY - (paddle2.y + paddle2.height / 2)) * aiReactionTime;
+            paddle2.speed = 3 + (aiDifficulty * 1.5);
+
+            // Ball movement
+            ball.x += ball.dx;
+            ball.y += ball.dy;
+
+            // Paddle boundaries
+            paddle1.y = Math.max(0, Math.min(canvas.height - paddle1.height, paddle1.y));
+            paddle2.y = Math.max(0, Math.min(canvas.height - paddle2.height, paddle2.y));
+
+            // Ball collisions
+            if (ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0) {
+                ball.dy = -ball.dy;
+            }
+            if (ball.x - ball.radius < paddle1.width && ball.y > paddle1.y && ball.y < paddle1.y + paddle1.height) {
+                ball.dx = -ball.dx * (1 + aiDifficulty * 0.05);
+                aiDifficulty = Math.min(10, aiDifficulty + 0.1);
+            }
+            if (ball.x + ball.radius > canvas.width - paddle2.width && ball.y > paddle2.y && ball.y < paddle2.y + paddle2.height) {
+                ball.dx = -ball.dx * (1 + aiDifficulty * 0.05);
+                aiDifficulty = Math.min(10, aiDifficulty + 0.1);
+            }
+
+            // Scoring
+            if (ball.x < 0) {
+                score2++;
+                lastScorer = 'ai';
+                if (aiDifficulty > 0.5) aiDifficulty -= 0.2;
+                resetBall();
+            }
+            if (ball.x > canvas.width) {
+                score1++;
+                lastScorer = 'player';
+                resetBall();
+                updateLevel();
+            }
+
+            // Animate text
+            textY += textDy;
+            if (textY > canvas.height - 50 || textY < 50) textDy = -textDy;
+            textScale += textScaleDir;
+            if (textScale > 1.2 || textScale < 0.8) textScaleDir = -textScaleDir;
+
+            // Animate particles
+            particles.forEach(p => {
+                p.x += p.dx;
+                p.y += p.dy;
+                if (p.x < 0 || p.x > canvas.width) p.dx = -p.dx;
+                if (p.y < 0 || p.y > canvas.height) p.dy = -p.dy;
+            });
+
+            // Drawing
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const bgGradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            bgGradient.addColorStop(0, 'rgba(0, 255, 0, 0.2)');
+            bgGradient.addColorStop(1, 'rgba(255, 255, 0, 0.2)');
+            ctx.fillStyle = bgGradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.strokeStyle = 'rgba(255, 255, 0, 0.1)';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += 50) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += 50) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            ctx.save();
+            const girlyGradient = ctx.createLinearGradient(0, textY-60, 0, textY+60);
+            girlyGradient.addColorStop(0, '#ff69b4');
+            girlyGradient.addColorStop(0.5, '#ff1493');
+            girlyGradient.addColorStop(1, '#ffb6c1');
+            ctx.fillStyle = girlyGradient;
+            ctx.font = `italic bold ${canvas.height * 0.15}px "Comic Sans MS", cursive`; // Scaled font
+            ctx.textAlign = 'center';
+            ctx.translate(canvas.width / 2, textY);
+            ctx.scale(textScale, textScale);
+            ctx.fillText('♥ Made by Jenna ♥', 0, 0);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.lineWidth = 2;
+            ctx.strokeText('♥ Made by Jenna ♥', 0, 0);
+            ctx.restore();
+
+            particles.forEach(p => {
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            ctx.fillStyle = '#ff00ff';
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#00ff00';
+            ctx.fillRect(0, paddle1.y, paddle1.width, paddle1.height);
+
+            const aiHue = Math.min(60, aiDifficulty * 6);
+            ctx.fillStyle = `hsl(${aiHue}, 100%, 50%)`;
+            ctx.fillRect(canvas.width - paddle2.width, paddle2.y, paddle2.width, paddle2.height);
+
+            ctx.fillStyle = '#fff';
+            ctx.font = `${canvas.height * 0.06}px Arial`; // Scaled font
+            ctx.fillText(`Player: ${score1}`, 50, 30);
+            ctx.fillText(`AI: ${score2}`, canvas.width - 150, 30);
+            ctx.fillText(`Level: ${level}`, canvas.width / 2 - 50, 30);
+
+            if (levelTransition) {
+                ctx.fillStyle = '#ff69b4';
+                ctx.font = `${canvas.height * 0.1}px "Comic Sans MS", cursive`;
+                ctx.fillText(`Level ${level}!`, canvas.width / 2 - 70, canvas.height / 2);
+            }
+        }
+
+        function resetBall() {
+            ball.x = canvas.width / 2;
+            ball.y = canvas.height / 2;
+            ball.dx = (lastScorer === 'ai' ? -5 : 5) * (1 + aiDifficulty * 0.1);
+            ball.dy = 5 * (Math.random() > 0.5 ? 1 : -1);
+            ball.radius = canvas.width * 0.025; // Scaled ball size
+            paddle1.height = canvas.height * 0.25; // Scaled paddle size
+            paddle2.height = canvas.height * 0.25;
+            paddle1.width = canvas.width * 0.025;
+            paddle2.width = canvas.width * 0.025;
+        }
+
+        console.log('Script loaded');
+    </script>
+</body>
+</html>
