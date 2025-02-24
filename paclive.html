@@ -3,6 +3,8 @@
 <head>
   <title>Space Pac-Invaders</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <!-- Add PayPal SDK with your client ID -->
+  <script src="https://www.paypal.com/sdk/js?client-id=AdvuOlMG6Qi_4TxZotXmrupgJTUfoNl8TH5bgrNCKNq2fPfOhZP1Ufr-ZlqZNjUBTUyrPCFRgG7sSe9y&currency=GBP"></script>
   <style>
     canvas {
       border: 1px solid #00FFFF;
@@ -66,7 +68,7 @@
       font-size: 24px;
       margin-bottom: 20px;
     }
-    #start-btn, #settings-btn, #back-btn, #save-settings-btn, #main-menu-btn, #restart-btn, #game-over-settings-btn, #leaderboard-btn, #leaderboard-go-btn, #rules-btn, #resume-btn, #pause-settings-btn, #share-btn, #redeem-code-btn, #donateBtn, #achievementsBtn, #back-to-menu-achievements, #shop-btn, #purchase-premium-btn, .shop-item-btn, .debug-btn, #debug-toggle-btn {
+    #start-btn, #settings-btn, #back-btn, #save-settings-btn, #main-menu-btn, #restart-btn, #game-over-settings-btn, #leaderboard-btn, #leaderboard-go-btn, #rules-btn, #resume-btn, #pause-settings-btn, #share-btn, #redeem-code-btn, #donateBtn, #achievementsBtn, #back-to-menu-achievements, #shop-btn, .shop-item-btn, .debug-btn, #debug-toggle-btn {
       padding: 10px 20px;
       font-size: 20px;
       background: #00FFFF;
@@ -77,7 +79,7 @@
       margin: 10px;
       transition: background 0.3s, transform 0.2s;
     }
-    #start-btn:hover, #settings-btn:hover, #back-btn:hover, #save-settings-btn:hover, #main-menu-btn:hover, #restart-btn:hover, #game-over-settings-btn:hover, #leaderboard-btn:hover, #leaderboard-go-btn:hover, #rules-btn:hover, #resume-btn:hover, #pause-settings-btn:hover, #share-btn:hover, #redeem-code-btn:hover, #donateBtn:hover, #achievementsBtn:hover, #back-to-menu-achievements:hover, #shop-btn:hover, #purchase-premium-btn:hover, .shop-item-btn:hover, .debug-btn:hover, #debug-toggle-btn:hover {
+    #start-btn:hover, #settings-btn:hover, #back-btn:hover, #save-settings-btn:hover, #main-menu-btn:hover, #restart-btn:hover, #game-over-settings-btn:hover, #leaderboard-btn:hover, #leaderboard-go-btn:hover, #rules-btn:hover, #resume-btn:hover, #pause-settings-btn:hover, #share-btn:hover, #redeem-code-btn:hover, #donateBtn:hover, #achievementsBtn:hover, #back-to-menu-achievements:hover, #shop-btn:hover, .shop-item-btn:hover, .debug-btn:hover, #debug-toggle-btn:hover {
       background: #00baba;
       transform: scale(1.1);
     }
@@ -250,6 +252,10 @@
       height: 50px;
       border: 1px solid #00FFFF;
     }
+    .paypal-buttons-container {
+      margin: 10px;
+      display: inline-block;
+    }
     @keyframes bounce {
       0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
       40% { transform: translateY(-15px); }
@@ -356,7 +362,7 @@
     </div>
     <input type="text" id="code-input" placeholder="Enter code">
     <button id="redeem-code-btn" onclick="redeemCode()">Redeem Code</button>
-    <button id="purchase-premium-btn" onclick="purchasePremium()">Buy Premium (£15)</button>
+    <div id="paypal-premium-container" class="paypal-buttons-container"></div>
     <button id="save-settings-btn" onclick="saveSettings()">Save Settings</button>
     <button id="back-btn" onclick="backToMenu()">Back</button>
   </div>
@@ -397,51 +403,51 @@
     <div id="shop-items">
       <div class="shop-item">
         <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTAgMTBIMzBWMzBIMTBWMTBaIiBmaWxsPSIjRkZGRkZGIi8+PHBhdGggZD0iTTIwIDMwVjQwTTYwIDQwSDQwVjMwSDQwWiIgZmlsbD0iIzAwMDAwMCIvPjwvc3ZnPg==" alt="Car">
-        <button class="shop-item-btn" onclick="purchaseShip('car', 1)">Car - £1</button>
+        <div id="paypal-car-container" class="paypal-buttons-container"></div>
       </div>
       <div class="shop-item">
         <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTAgMjVMNDAgMzVMMjUgNDBMMTAgMjVaIiBmaWxsPSIjQUFBQUFBIi8+PHBhdGggZD0iTTI1IDE1TDE1IDI1TDM1IDI1TDI1IDE1WiIgZmlsbD0iIzAwMDAwMCIvPjwvc3ZnPg==" alt="Plane">
-        <button class="shop-item-btn" onclick="purchaseShip('plane', 1)">Plane - £1</button>
+        <div id="paypal-plane-container" class="paypal-buttons-container"></div>
       </div>
       <div class="shop-item">
         <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZWxsaXBzZSBjeD0iMjUiIGN5PSIyNSIgcng9IjIwIiByeT0iMTAiIGZpbGw9IiNGRkZGRkYiLz48ZWxsaXBzZSBjeD0iMjUiIGN5PSIxNSIgcng9IjE1IiByeT0iOCIgZmlsbD0iI0FBQUFBQSIvPjwvc3ZnPg==" alt="UFO">
-        <button class="shop-item-btn" onclick="purchaseShip('ufo', 1)">UFO - £1</button>
+        <div id="paypal-ufo-container" class="paypal-buttons-container"></div>
       </div>
       <div class="shop-item">
         <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTAgMjVMNDAgMzVMMjUgNDBMMTAgMjVaIiBmaWxsPSIjRkZGRkZGIi8+PHBhdGggZD0iTTIwIDQwVjQ1SDMwVjQwSDIwWiIgZmlsbD0iI0ZGNDUwMCIvPjwvc3ZnPg==" alt="Spaceship">
-        <button class="shop-item-btn" onclick="purchaseShip('spaceship', 1)">Spaceship - £1</button>
+        <div id="paypal-spaceship-container" class="paypal-buttons-container"></div>
       </div>
       <div class="shop-item">
         <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB4PSIxMCIgeT0iMTUiIHdpZHRoPSI0MCIgaGVpZ2h0PSIxNSIgZmlsbD0iIzY2NjYzMyIvPjxwYXRoIGQ9Ik0yMCAxME0zMCAzNSIgZmlsbD0iIzMzMzMzMyIvPjwvc3ZnPg==" alt="Tank">
-        <button class="shop-item-btn" onclick="purchaseShip('tank', 1)">Tank - £1</button>
+        <div id="paypal-tank-container" class="paypal-buttons-container"></div>
       </div>
       <div class="shop-item">
         <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTAgMjVMNDAgMzVMMjUgNDBMMTAgMjVaIiBmaWxsPSIjRkZGRkZGIi8+PHBhdGggZD0iTTIwIDEwTDMwIDIwTDE1IDI1TDIwIDEwWiIgZmlsbD0iI0ZGNDUwMCIvPjwvc3ZnPg==" alt="Dragon">
-        <button class="shop-item-btn" onclick="purchaseShip('dragon', 1)">Dragon - £1</button>
+        <div id="paypal-dragon-container" class="paypal-buttons-container"></div>
       </div>
       <div class="shop-item">
         <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB4PSIxMCIgeT0iMTAiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgZmlsbD0iI0FBQUFBQSIvPjxjaXJjbGUgY3g9IjI1IiBjeT0iMTUiIHI9IjEwIiBmaWxsPSIjRkYwMDAwIi8+PC9zdmc+" alt="Cruiser">
-        <button class="shop-item-btn" onclick="purchaseShip('cruiser', 1)">Cruiser - £1</button>
+        <div id="paypal-cruiser-container" class="paypal-buttons-container"></div>
       </div>
       <div class="shop-item">
         <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTAgMjVMNDAgMzVMMjUgNDBMMTAgMjVaIiBmaWxsPSIjNjY2NjY2Ii8+PHJlY3QgeD0iMjAiIHk9IjMwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIGZpbGw9IiMwMDAwMDAiLz48L3N2Zz4=" alt="Bomber">
-        <button class="shop-item-btn" onclick="purchaseShip('bomber', 1)">Bomber - £1</button>
+        <div id="paypal-bomber-container" class="paypal-buttons-container"></div>
       </div>
       <div class="shop-item">
         <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTAgNDAiIGZpbGw9IiM4QjQ1MTMiLz48cGF0aCBkPSJNMTAgMzBMMzAgNDBMMjAgMjVMMTAgMzBaIiBmaWxsPSIjRkZGRkZGIi8+PC9zdmc+" alt="Pirate">
-        <button class="shop-item-btn" onclick="purchaseShip('pirate', 1)">Pirate - £1</button>
+        <div id="paypal-pirate-container" class="paypal-buttons-container"></div>
       </div>
       <div class="shop-item">
         <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTAgMjVMNDAgMzVMMjUgNDBMMTAgMjVaIiBmaWxsPSIjMDBGRjAwIi8+PC9zdmc+" alt="Random">
-        <button class="shop-item-btn" onclick="purchaseRandomShip()">Random AI Ship - £0.50</button>
+        <div id="paypal-random-container" class="paypal-buttons-container"></div>
       </div>
       <div class="shop-item">
         <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTAgMjVMNDAgMzUiIGZpbGw9IiNGRkYwMDAiLz48L3N2Zz4=" alt="Speed Boost">
-        <button class="shop-item-btn" onclick="purchaseSpeedBoost()">Speed Boost - £2</button>
+        <div id="paypal-speedboost-container" class="paypal-buttons-container"></div>
       </div>
       <div class="shop-item">
         <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyNSIgY3k9IjI1IiByPSIyMCIgZmlsbD0iIzAwRkYwMCIvPjwvc3ZnPg==" alt="Shield Pack">
-        <button class="shop-item-btn" onclick="purchaseShieldPack()">Shield Pack - £3</button>
+        <div id="paypal-shieldpack-container" class="paypal-buttons-container"></div>
       </div>
     </div>
     <button id="back-btn" onclick="backToMenuFromShop()">Back</button>
@@ -573,7 +579,6 @@
     let customSounds = { waka: null, death: null, shoot: null, enemyHit: null, upgrade: null };
     let isPremium = localStorage.getItem('isPremium') === 'true';
     let ownedShips = JSON.parse(localStorage.getItem('ownedShips')) || ['default', 'scout', 'ranger', 'blaster'];
-    let pendingPurchase = null;
     let achievements = JSON.parse(localStorage.getItem('achievements')) || {
       pacmanSlayer: { count: 0, unlocked: false },
       ghostHunter: { count: 0, unlocked: false },
@@ -604,14 +609,14 @@
     const shipIcons = {
       default: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNNSA1TDE1IDE1TDEyIDEyTDggOEw1IDEyTDUgNVoiIGZpbGw9IiNGRkZGMDAiLz48Y2lyY2xlIGN4PSIxMCIgY3k9IjciIHI9IjIiIGZpbGw9IiNGRkZGRkYiLz48cmVjdCB4PSI4IiB5PSIxNSIgd2lkdGg9IjQiIGhlaWdodD0iMiIgZmlsbD0iI0ZGNDUwMCIvPjwvc3ZnPg==',
       car: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB4PSI1IiB5PSI3IiB3aWR0aD0iMTAiIGhlaWdodD0iNiIgZmlsbD0iI0ZGRkZGRiIvPjxyZWN0IHg9IjciIHk9IjgiIHdpZHRoPSI2IiBoZWlnaHQ9IjIiIGZpbGw9IiNGRkZGMDAiLz48Y2lyY2xlIGN4PSI2IiBjeT0iMTQiIHI9IjEiIGZpbGw9IiMwMDAwMDAiLz48Y2lyY2xlIGN4PSIxNCIgY3k9IjE0IiByPSIxIiBmaWxsPSIjMDAwMDAwIi8+PC9zdmc+',
-      plane: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNNSA4TDE1IDEzTDEyIDE1TDggMTVMMiAxM0w1IDhaIiBmaWxsPSIjQUFBQUFBIi8+PHJlY3QgeD0iOCIgeT0iNiIgd2lkdGg9IjQiIGhlaWdodD0iNiIgZmlsbD0iIzAwMDAwMCIvPjwvc3ZnPg==',
+      plane: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNNSA4TDE1IDEzTDEyIDE1LDggMTVMMiAxM0w1IDhaIiBmaWxsPSIjQUFBQUFBIi8+PHJlY3QgeD0iOCIgeT0iNiIgd2lkdGg9IjQiIGhlaWdodD0iNiIgZmlsbD0iIzAwMDAwMCIvPjwvc3ZnPg==',
       ufo: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZWxsaXBzZSBjeD0iMTAiIGN5PSIxMCIgcng9IjgiIHJ5PSI0IiBmaWxsPSIjRkZGRkZGIi8+PGVsbGlwc2UgY3g9IjEwIiBjeT0iOCIgcng9IjYiIHJ5PSIzIiBmaWxsPSIjQUFBQUFBIi8+PC9zdmc+',
-      spaceship: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNNSA4TDE1IDEzTDEyIDE1TDggMTVMMiAxM0w1IDhaIiBmaWxsPSIjRkZGRkZGIi8+PHJlY3QgeD0iOCIgeT0iMTUiIHdpZHRoPSI0IiBoZWlnaHQ9IjIiIGZpbGw9IiNGRjQ1MDAiLz48L3N2Zz4=',
+      spaceship: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNNSA4TDE1IDEzTDEyIDE1LDggMTVMMiAxM0w1IDhaIiBmaWxsPSIjRkZGRkZGIi8+PHJlY3QgeD0iOCIgeT0iMTUiIHdpZHRoPSI0IiBoZWlnaHQ9IjIiIGZpbGw9IiNGRjQ1MDAiLz48L3N2Zz4=',
       tank: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB4PSI1IiB5PSI4IiB3aWR0aD0iMTAiIGhlaWdodD0iNiIgZmlsbD0iIzY2NjYzMyIvPjxyZWN0IHg9IjgiIHk9IjYiIHdpZHRoPSI0IiBoZWlnaHQ9IjQiIGZpbGw9IiMzMzMzMzMiLz48L3N2Zz4=',
-      dragon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNNSA4TDE1IDEzTDEyIDE1TDggMTVMMiAxM0w1IDhaIiBmaWxsPSIjRkZGRkZGIi8+PHBhdGggZD0iTTEwIDVMMTIgN0w4IDdMMTEgNVoiIGZpbGw9IiNGRjQ1MDAiLz48L3N2Zz4=',
+      dragon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNNSA4TDE1IDEzTDEyIDE1LDggMTVMMiAxM0w1IDhaIiBmaWxsPSIjRkZGRkZGIi8+PHBhdGggZD0iTTEwIDVMMTIgN0w4IDdMMTEgNVoiIGZpbGw9IiNGRjQ1MDAiLz48L3N2Zz4=',
       cruiser: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB4PSI1IiB5PSI1IiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIGZpbGw9IiNBQUFBQUEiLz48Y2lyY2xlIGN4PSIxMCIgY3k9IjciIHI9IjMiIGZpbGw9IiNGRjAwMDAiLz48L3N2Zz4=',
-      bomber: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNNSA4TDE1IDEzTDEyIDE1TDggMTVMMiAxM0w1IDhaIiBmaWxsPSIjNjY2NjY2Ii8+PHJlY3QgeD0iOCIgeT0iMTMiIHdpZHRoPSI0IiBoZWlnaHQ9IjQiIGZpbGw9IiMwMDAwMDAiLz48L3N2Zz4=',
-      pirate: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNNSA4TDE1IDEzTDEyIDE1TDggMTVMMiAxM0w1IDhaIiBmaWxsPSIjOEI0NTEzIi8+PHBhdGggZD0iTTEwIDVMMTIgN0w4IDdMMTEgNVoiIGZpbGw9IiNGRkZGRkYiLz48L3N2Zz4=',
+      bomber: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNNSA4TDE1IDEzTDEyIDE1LDggMTVMMiAxM0w1IDhaIiBmaWxsPSIjNjY2NjY2Ii8+PHJlY3QgeD0iOCIgeT0iMTMiIHdpZHRoPSI0IiBoZWlnaHQ9IjQiIGZpbGw9IiMwMDAwMDAiLz48L3N2Zz4=',
+      pirate: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNNSA4TDE1IDEzTDEyIDE1LDggMTVMMiAxM0w1IDhaIiBmaWxsPSIjOEI0NTEzIi8+PHBhdGggZD0iTTEwIDVMMTIgN0w4IDdMMTEgNVoiIGZpbGw9IiNGRkZGRkYiLz48L3N2Zz4=',
       scout: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNNSA4TDE1IDEzTDEwIDE1LDUsMTBaIiBmaWxsPSIjMDBGRjAwIi8+PC9zdmc+',
       ranger: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNNSA4LDEyLDE1LDgsMTVaIiBmaWxsPSIjRkYwMEZGIi8+PHJlY3QgeD0iOCIgeT0iMTUiIHdpZHRoPSI0IiBoZWlnaHQ9IjIiIGZpbGw9IiNGRjAwRkYiLz48L3N2Zz4=',
       blaster: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMCIgY3k9IjEwIiByPSI4IiBmaWxsPSIjRkZGRkZGIi8+PGNpcmNsZSBjeD0iMTAiIGN5PSI3IiByPSI0IiBmaWxsPSIjMDAwMDAwIi8+PC9zdmc+'
@@ -653,7 +658,7 @@
       ownedShips.forEach(ship => {
         const option = document.createElement('option');
         option.value = ship;
-        option.innerHTML = `<span class="ship-option"><img src="${shipIcons[ship] || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNNSA4TDE1IDEzTDEwIDE1TDUgMTBaIiBmaWxsPSIjRkZGRkZGIi8+PC9zdmc+'}"> ${ship}</span>`;
+        option.innerHTML = `<span class="ship-option"><img src="${shipIcons[ship] || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNNSA4TDE1IDEzTDEwIDE1LDUgMTBaIiBmaWxsPSIjRkZGRkZGIi8+PC9zdmc+'}"> ${ship}</span>`;
         if (ship === player.shipType) option.selected = true;
         selectElement.appendChild(option);
       });
@@ -770,7 +775,6 @@
       updateLeaderboardDisplay();
       updateShipSelect(shipSelect);
       updateShipSelect(pauseShipSelect);
-      checkPendingPurchase();
     }
 
     function applyTheme() {
@@ -859,92 +863,6 @@
       }
     }
 
-    function purchasePremium() {
-      pendingPurchase = { type: 'premium', amount: 15 };
-      localStorage.setItem('pendingPurchase', JSON.stringify(pendingPurchase));
-      window.open('https://www.paypal.me/kingphilosipher/15', '_blank');
-    }
-
-    function purchaseShip(ship, amount) {
-      if (ownedShips.includes(ship)) {
-        showMessage('You already own this ship!');
-        return;
-      }
-      pendingPurchase = { type: 'ship', ship: ship, amount: amount };
-      localStorage.setItem('pendingPurchase', JSON.stringify(pendingPurchase));
-      window.open(`https://www.paypal.me/kingphilosipher/${amount}`, '_blank');
-    }
-
-    function purchaseRandomShip() {
-      pendingPurchase = { type: 'randomShip', amount: 0.50 };
-      localStorage.setItem('pendingPurchase', JSON.stringify(pendingPurchase));
-      window.open('https://www.paypal.me/kingphilosipher/0.50', '_blank');
-    }
-
-    function purchaseSpeedBoost() {
-      if (player.speedBoost) {
-        showMessage('You already have the Speed Boost!');
-        return;
-      }
-      pendingPurchase = { type: 'speedBoost', amount: 2 };
-      localStorage.setItem('pendingPurchase', JSON.stringify(pendingPurchase));
-      window.open('https://www.paypal.me/kingphilosipher/2', '_blank');
-    }
-
-    function purchaseShieldPack() {
-      if (player.shieldPack) {
-        showMessage('You already have the Shield Pack!');
-        return;
-      }
-      pendingPurchase = { type: 'shieldPack', amount: 3 };
-      localStorage.setItem('pendingPurchase', JSON.stringify(pendingPurchase));
-      window.open('https://www.paypal.me/kingphilosipher/3', '_blank');
-    }
-
-    function checkPendingPurchase() {
-      pendingPurchase = JSON.parse(localStorage.getItem('pendingPurchase'));
-      if (pendingPurchase) {
-        const confirmed = confirm(`Did you complete the payment of £${pendingPurchase.amount} for ${pendingPurchase.type === 'premium' ? 'Premium' : pendingPurchase.type === 'ship' ? pendingPurchase.ship : pendingPurchase.type === 'randomShip' ? 'a random AI ship' : pendingPurchase.type === 'speedBoost' ? 'Speed Boost' : 'Shield Pack'}? Confirm truthfully or lose access and funds!`);
-        if (confirmed) {
-          if (pendingPurchase.type === 'premium') {
-            isPremium = true;
-            localStorage.setItem('isPremium', 'true');
-            bgImageInput.disabled = false;
-            bgMusicInput.disabled = false;
-            document.getElementById('premium-options').style.display = 'block';
-            player.fireRate = 15;
-            player.lives = 3;
-            showMessage('Premium purchased! Enjoy faster fire rate, extra lives, and more upgrades.');
-          } else if (pendingPurchase.type === 'ship') {
-            ownedShips.push(pendingPurchase.ship);
-            localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
-            showMessage(`Purchased ${pendingPurchase.ship}!`);
-          } else if (pendingPurchase.type === 'randomShip') {
-            const newShip = generateUniqueShipName();
-            ownedShips.push(newShip);
-            localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
-            showMessage(`You got a unique AI ship: ${newShip}!`);
-          } else if (pendingPurchase.type === 'speedBoost') {
-            player.speedBoost = true;
-            localStorage.setItem('speedBoost', 'true');
-            player.speed = 10;
-            showMessage('Speed Boost purchased! Your speed is now doubled.');
-          } else if (pendingPurchase.type === 'shieldPack') {
-            player.shieldPack = true;
-            localStorage.setItem('shieldPack', 'true');
-            player.shield = 200;
-            showMessage('Shield Pack purchased! Your shield is now doubled.');
-          }
-          updateShipSelect(shipSelect);
-          updateShipSelect(pauseShipSelect);
-        } else {
-          showMessage('Purchase not confirmed. Funds and access denied.');
-        }
-        localStorage.removeItem('pendingPurchase');
-        pendingPurchase = null;
-      }
-    }
-
     function toggleMute() {
       isMuted = !isMuted;
       if (isMuted) {
@@ -1028,7 +946,7 @@
       const extension = file.name.split('.').pop().toLowerCase();
       if (extension === 'mp3') {
         const url = URL.createObjectURL(file);
-        customSounds[type]        = new Audio(url);
+        customSounds[type] = new Audio(url);
         customSounds[type].volume = isMuted ? 0 : gameVolumeLevel;
         showMessage(`${type} sound uploaded successfully!`);
       } else {
@@ -1172,10 +1090,7 @@
         shopMenu.style.opacity = '1';
         menu.style.display = 'block';
         menu.style.opacity = '0';
-        setTimeout(() => {
-          menu.style.opacity = '1';
-          checkPendingPurchase();
-        }, 10);
+        setTimeout(() => menu.style.opacity = '1', 10);
       }, 500);
     }
 
@@ -1458,10 +1373,7 @@
         settingsMenu.style.opacity = '1';
         menu.style.display = 'block';
         menu.style.opacity = '0';
-        setTimeout(() => {
-          menu.style.opacity = '1';
-          checkPendingPurchase();
-        }, 10);
+        setTimeout(() => menu.style.opacity = '1', 10);
       }, 500);
     }
 
@@ -1472,10 +1384,7 @@
         gameOverMenu.style.opacity = '1';
         menu.style.display = 'block';
         menu.style.opacity = '0';
-        setTimeout(() => {
-          menu.style.opacity = '1';
-          checkPendingPurchase();
-        }, 10);
+        setTimeout(() => menu.style.opacity = '1', 10);
         canvas.style.display = 'none';
         scoreDisplay.style.display = 'none';
         levelDisplay.style.display = 'none';
@@ -1495,10 +1404,7 @@
         pauseMenu.style.opacity = '1';
         menu.style.display = 'block';
         menu.style.opacity = '0';
-        setTimeout(() => {
-          menu.style.opacity = '1';
-          checkPendingPurchase();
-        }, 10);
+        setTimeout(() => menu.style.opacity = '1', 10);
         canvas.style.display = 'none';
         scoreDisplay.style.display = 'none';
         levelDisplay.style.display = 'none';
@@ -2260,7 +2166,424 @@
       }
     }
 
+    // PayPal Payment Functions
+    function initPayPalButtons() {
+      // Premium Purchase (£15)
+      paypal.Buttons({
+        createOrder: (data, actions) => {
+          return actions.order.create({
+            purchase_units: [{
+              amount: {
+                value: '15.00',
+                currency_code: 'GBP'
+              },
+              description: 'Space Pac-Invaders Premium Upgrade'
+            }]
+          });
+        },
+        onApprove: (data, actions) => {
+          return actions.order.capture().then(details => {
+            isPremium = true;
+            localStorage.setItem('isPremium', 'true');
+            bgImageInput.disabled = false;
+            bgMusicInput.disabled = false;
+            document.getElementById('premium-options').style.display = 'block';
+            player.fireRate = 15;
+            player.lives = 3;
+            updateShipSelect(shipSelect);
+            updateShipSelect(pauseShipSelect);
+            showMessage(`Thank you, ${details.payer.name.given_name}! Premium unlocked! Enjoy faster fire rate and extra lives.`);
+          });
+        },
+        onError: (err) => {
+          console.error('PayPal Premium Purchase Error:', err);
+          showMessage('Payment failed! Please try again.');
+        }
+      }).render('#paypal-premium-container');
+
+      // Car Ship (£1)
+      paypal.Buttons({
+        createOrder: (data, actions) => {
+          return actions.order.create({
+            purchase_units: [{
+              amount: {
+                value: '1.00',
+                currency_code: 'GBP'
+              },
+              description: 'Space Pac-Invaders Car Ship'
+            }]
+          });
+        },
+        onApprove: (data, actions) => {
+          return actions.order.capture().then(details => {
+            if (!ownedShips.includes('car')) {
+              ownedShips.push('car');
+              localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
+              updateShipSelect(shipSelect);
+              updateShipSelect(pauseShipSelect);
+              showMessage(`Thank you, ${details.payer.name.given_name}! Car ship purchased!`);
+            } else {
+              showMessage('You already own the Car ship!');
+            }
+          });
+        },
+        onError: (err) => {
+          console.error('PayPal Car Purchase Error:', err);
+          showMessage('Payment failed! Please try again.');
+        }
+      }).render('#paypal-car-container');
+
+      // Plane Ship (£1)
+      paypal.Buttons({
+        createOrder: (data, actions) => {
+          return actions.order.create({
+            purchase_units: [{
+              amount: {
+                value: '1.00',
+                currency_code: 'GBP'
+              },
+              description: 'Space Pac-Invaders Plane Ship'
+            }]
+          });
+        },
+        onApprove: (data, actions) => {
+          return actions.order.capture().then(details => {
+            if (!ownedShips.includes('plane')) {
+              ownedShips.push('plane');
+              localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
+              updateShipSelect(shipSelect);
+              updateShipSelect(pauseShipSelect);
+              showMessage(`Thank you, ${details.payer.name.given_name}! Plane ship purchased!`);
+            } else {
+              showMessage('You already own the Plane ship!');
+            }
+          });
+        },
+        onError: (err) => {
+          console.error('PayPal Plane Purchase Error:', err);
+          showMessage('Payment failed! Please try again.');
+        }
+      }).render('#paypal-plane-container');
+
+      // UFO Ship (£1)
+      paypal.Buttons({
+        createOrder: (data, actions) => {
+          return actions.order.create({
+            purchase_units: [{
+              amount: {
+                value: '1.00',
+                currency_code: 'GBP'
+              },
+              description: 'Space Pac-Invaders UFO Ship'
+            }]
+          });
+        },
+        onApprove: (data, actions) => {
+          return actions.order.capture().then(details => {
+            if (!ownedShips.includes('ufo')) {
+              ownedShips.push('ufo');
+              localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
+              updateShipSelect(shipSelect);
+              updateShipSelect(pauseShipSelect);
+              showMessage(`Thank you, ${details.payer.name.given_name}! UFO ship purchased!`);
+            } else {
+              showMessage('You already own the UFO ship!');
+            }
+          });
+        },
+        onError: (err) => {
+          console.error('PayPal UFO Purchase Error:', err);
+          showMessage('Payment failed! Please try again.');
+        }
+      }).render('#paypal-ufo-container');
+
+      // Spaceship Ship (£1)
+      paypal.Buttons({
+        createOrder: (data, actions) => {
+          return actions.order.create({
+            purchase_units: [{
+              amount: {
+                value: '1.00',
+                currency_code: 'GBP'
+              },
+              description: 'Space Pac-Invaders Spaceship'
+            }]
+          });
+        },
+        onApprove: (data, actions) => {
+          return actions.order.capture().then(details => {
+            if (!ownedShips.includes('spaceship')) {
+              ownedShips.push('spaceship');
+              localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
+              updateShipSelect(shipSelect);
+              updateShipSelect(pauseShipSelect);
+              showMessage(`Thank you, ${details.payer.name.given_name}! Spaceship purchased!`);
+            } else {
+              showMessage('You already own the Spaceship!');
+            }
+          });
+        },
+        onError: (err) => {
+          console.error('PayPal Spaceship Purchase Error:', err);
+          showMessage('Payment failed! Please try again.');
+        }
+      }).render('#paypal-spaceship-container');
+
+      // Tank Ship (£1)
+      paypal.Buttons({
+        createOrder: (data, actions) => {
+          return actions.order.create({
+            purchase_units: [{
+              amount: {
+                value: '1.00',
+                currency_code: 'GBP'
+              },
+              description: 'Space Pac-Invaders Tank Ship'
+            }]
+          });
+        },
+        onApprove: (data, actions) => {
+          return actions.order.capture().then(details => {
+            if (!ownedShips.includes('tank')) {
+              ownedShips.push('tank');
+              localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
+              updateShipSelect(shipSelect);
+              updateShipSelect(pauseShipSelect);
+              showMessage(`Thank you, ${details.payer.name.given_name}! Tank ship purchased!`);
+            } else {
+              showMessage('You already own the Tank ship!');
+            }
+          });
+        },
+        onError: (err) => {
+          console.error('PayPal Tank Purchase Error:', err);
+          showMessage('Payment failed! Please try again.');
+        }
+      }).render('#paypal-tank-container');
+
+      // Dragon Ship (£1)
+      paypal.Buttons({
+        createOrder: (data, actions) => {
+          return actions.order.create({
+            purchase_units: [{
+              amount: {
+                value: '1.00',
+                currency_code: 'GBP'
+              },
+              description: 'Space Pac-Invaders Dragon Ship'
+            }]
+          });
+        },
+        onApprove: (data, actions) => {
+          return actions.order.capture().then(details => {
+            if (!ownedShips.includes('dragon')) {
+              ownedShips.push('dragon');
+              localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
+              updateShipSelect(shipSelect);
+              updateShipSelect(pauseShipSelect);
+              showMessage(`Thank you, ${details.payer.name.given_name}! Dragon ship purchased!`);
+            } else {
+              showMessage('You already own the Dragon ship!');
+            }
+          });
+        },
+        onError: (err) => {
+          console.error('PayPal Dragon Purchase Error:', err);
+          showMessage('Payment failed! Please try again.');
+        }
+      }).render('#paypal-dragon-container');
+
+      // Cruiser Ship (£1)
+      paypal.Buttons({
+        createOrder: (data, actions) => {
+          return actions.order.create({
+            purchase_units: [{
+              amount: {
+                value: '1.00',
+                currency_code: 'GBP'
+              },
+              description: 'Space Pac-Invaders Cruiser Ship'
+            }]
+          });
+        },
+        onApprove: (data, actions) => {
+          return actions.order.capture().then(details => {
+            if (!ownedShips.includes('cruiser')) {
+              ownedShips.push('cruiser');
+              localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
+              updateShipSelect(shipSelect);
+              updateShipSelect(pauseShipSelect);
+              showMessage(`Thank you, ${details.payer.name.given_name}! Cruiser ship purchased!`);
+            } else {
+              showMessage('You already own the Cruiser ship!');
+            }
+          });
+        },
+        onError: (err) => {
+          console.error('PayPal Cruiser Purchase Error:', err);
+          showMessage('Payment failed! Please try again.');
+        }
+      }).render('#paypal-cruiser-container');
+
+      // Bomber Ship (£1)
+      paypal.Buttons({
+        createOrder: (data, actions) => {
+          return actions.order.create({
+            purchase_units: [{
+              amount: {
+                value: '1.00',
+                currency_code: 'GBP'
+              },
+              description: 'Space Pac-Invaders Bomber Ship'
+            }]
+          });
+        },
+        onApprove: (data, actions) => {
+          return actions.order.capture().then(details => {
+            if (!ownedShips.includes('bomber')) {
+              ownedShips.push('bomber');
+              localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
+              updateShipSelect(shipSelect);
+              updateShipSelect(pauseShipSelect);
+              showMessage(`Thank you, ${details.payer.name.given_name}! Bomber ship purchased!`);
+            } else {
+              showMessage('You already own the Bomber ship!');
+            }
+          });
+        },
+        onError: (err) => {
+          console.error('PayPal Bomber Purchase Error:', err);
+          showMessage('Payment failed! Please try again.');
+        }
+      }).render('#paypal-bomber-container');
+
+      // Pirate Ship (£1)
+      paypal.Buttons({
+        createOrder: (data, actions) => {
+          return actions.order.create({
+            purchase_units: [{
+              amount: {
+                value: '1.00',
+                currency_code: 'GBP'
+              },
+              description: 'Space Pac-Invaders Pirate Ship'
+            }]
+          });
+        },
+        onApprove: (data, actions) => {
+          return actions.order.capture().then(details => {
+            if (!ownedShips.includes('pirate')) {
+              ownedShips.push('pirate');
+              localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
+              updateShipSelect(shipSelect);
+              updateShipSelect(pauseShipSelect);
+              showMessage(`Thank you, ${details.payer.name.given_name}! Pirate ship purchased!`);
+            } else {
+              showMessage('You already own the Pirate ship!');
+            }
+          });
+        },
+        onError: (err) => {
+          console.error('PayPal Pirate Purchase Error:', err);
+          showMessage('Payment failed! Please try again.');
+        }
+      }).render('#paypal-pirate-container');
+
+      // Random Ship (£0.50)
+      paypal.Buttons({
+        createOrder: (data, actions) => {
+          return actions.order.create({
+            purchase_units: [{
+              amount: {
+                value: '0.50',
+                currency_code: 'GBP'
+              },
+              description: 'Space Pac-Invaders Random AI Ship'
+            }]
+          });
+        },
+        onApprove: (data, actions) => {
+          return actions.order.capture().then(details => {
+            const newShip = generateUniqueShipName();
+            ownedShips.push(newShip);
+            localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
+            updateShipSelect(shipSelect);
+            updateShipSelect(pauseShipSelect);
+            showMessage(`Thank you, ${details.payer.name.given_name}! You got a unique AI ship: ${newShip}!`);
+          });
+        },
+        onError: (err) => {
+          console.error('PayPal Random Ship Purchase Error:', err);
+          showMessage('Payment failed! Please try again.');
+        }
+      }).render('#paypal-random-container');
+
+      // Speed Boost (£2)
+      paypal.Buttons({
+        createOrder: (data, actions) => {
+          return actions.order.create({
+            purchase_units: [{
+              amount: {
+                value: '2.00',
+                currency_code: 'GBP'
+              },
+              description: 'Space Pac-Invaders Speed Boost'
+            }]
+          });
+        },
+        onApprove: (data, actions) => {
+          return actions.order.capture().then(details => {
+            if (!player.speedBoost) {
+              player.speedBoost = true;
+              localStorage.setItem('speedBoost', 'true');
+              player.speed = 10;
+              showMessage(`Thank you, ${details.payer.name.given_name}! Speed Boost purchased! Your speed is now doubled.`);
+            } else {
+              showMessage('You already have the Speed Boost!');
+            }
+          });
+        },
+        onError: (err) => {
+          console.error('PayPal Speed Boost Purchase Error:', err);
+          showMessage('Payment failed! Please try again.');
+        }
+      }).render('#paypal-speedboost-container');
+
+      // Shield Pack (£3)
+      paypal.Buttons({
+        createOrder: (data, actions) => {
+          return actions.order.create({
+            purchase_units: [{
+              amount: {
+                value: '3.00',
+                currency_code: 'GBP'
+              },
+              description: 'Space Pac-Invaders Shield Pack'
+            }]
+          });
+        },
+        onApprove: (data, actions) => {
+          return actions.order.capture().then(details => {
+            if (!player.shieldPack) {
+              player.shieldPack = true;
+              localStorage.setItem('shieldPack', 'true');
+              player.shield = 200;
+              showMessage(`Thank you, ${details.payer.name.given_name}! Shield Pack purchased! Your shield is now doubled.`);
+            } else {
+              showMessage('You already have the Shield Pack!');
+            }
+          });
+        },
+        onError: (err) => {
+          console.error('PayPal Shield Pack Purchase Error:', err);
+          showMessage('Payment failed! Please try again.');
+        }
+      }).render('#paypal-shieldpack-container');
+    }
+
+    // Initialize game and PayPal buttons
     loadSettings();
+    initPayPalButtons();
   </script>
 </body>
 </html>
