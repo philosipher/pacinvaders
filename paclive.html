@@ -6,14 +6,12 @@
     <script src="https://www.paypal.com/sdk/js?client-id=AdvuOlMG6Qi_4TxZotXmrupgJTUfoNl8TH5bgrNCKNq2fPfOhZP1Ufr-ZlqZNjUBTUyrPCFRgG7sSe9y&currency=GBP"></script>
     <style>
         canvas {
-            border: 2px solid #00FFFF;
+            border: 1px solid #00FFFF;
             background: #000000;
             max-width: 100%;
             height: auto;
             display: none;
             touch-action: none;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
         }
         body {
             display: flex;
@@ -21,10 +19,10 @@
             align-items: center;
             height: 100vh;
             margin: 0;
-            background: linear-gradient(135deg, #000033, #000000);
+            background: #000000;
             overflow: hidden;
             touch-action: none;
-            font-family: 'Orbitron', Arial, sans-serif;
+            font-family: Arial, sans-serif;
         }
         #menu, #settings-menu, #game-over-menu, #pause-menu, #achievements-menu, #shop-menu, #debug-menu, #tutorial-menu {
             text-align: center;
@@ -32,95 +30,102 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            transition: all 0.5s ease;
-            max-height: 85vh;
+            transition: opacity 0.5s ease;
+            max-height: 80vh;
             overflow-y: auto;
-            padding: 20px;
+            padding: 10px;
             box-sizing: border-box;
-            background: linear-gradient(135deg, rgba(0, 0, 51, 0.9), rgba(0, 0, 0, 0.8));
-            border: 2px solid #00FFFF;
-            border-radius: 15px;
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.7), inset 0 0 10px rgba(0, 255, 255, 0.3);
+            opacity: 1;
         }
         #settings-menu, #game-over-menu, #pause-menu, #achievements-menu, #shop-menu, #debug-menu, #tutorial-menu {
             display: none;
-            animation: slideIn 0.5s ease-out;
+        }
+        #game-over-menu, #pause-menu, #achievements-menu, #shop-menu, #debug-menu, #tutorial-menu {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            animation: popIn 0.3s ease-out;
         }
         #debug-menu {
             position: fixed;
-            top: 70px;
-            left: 20px;
-            width: 320px;
-            background: rgba(0, 0, 0, 0.7);
+            top: 60px;
+            left: 10px;
+            width: 300px;
+            max-height: calc(100vh - 70px);
+            overflow-y: auto;
             z-index: 101;
+            background: rgba(0, 0, 0, 0.5);
         }
         #logo {
-            font-size: 60px;
+            font-size: 48px;
             font-weight: bold;
-            margin-bottom: 25px;
-            color: #00FFFF;
-            text-shadow: 0 0 10px #00FFFF, 0 0 20px #00FFFF;
-            animation: pulse 1.5s infinite;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px #00FFFF;
+            animation: bounce 2s infinite;
         }
         #made-by {
-            font-size: 28px;
+            font-size: 24px;
             margin-bottom: 20px;
-            color: #FFFF00;
-            text-shadow: 0 0 5px #FFFF00;
         }
-        button {
-            padding: 12px 25px;
-            font-size: 22px;
-            background: linear-gradient(45deg, #00FFFF, #00baba);
+        #start-btn, #settings-btn, #back-btn, #save-settings-btn, #main-menu-btn, #restart-btn, #game-over-settings-btn, #leaderboard-btn, #leaderboard-go-btn, #rules-btn, #resume-btn, #pause-settings-btn, #share-btn, #redeem-code-btn, #donateBtn, #achievementsBtn, #back-to-menu-achievements, #shop-btn, .shop-item-btn, .debug-btn, #debug-toggle-btn, #tutorial-btn, #copy-score-btn, #challenge-friend-btn, #save-prices-btn {
+            padding: 10px 20px;
+            font-size: 20px;
+            background: #00FFFF;
             color: #000000;
             border: none;
-            border-radius: 8px;
+            border-radius: 5px;
             cursor: pointer;
-            margin: 12px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.5);
+            margin: 10px;
+            transition: background 0.3s, transform 0.2s;
         }
-        button:hover {
-            background: linear-gradient(45deg, #00baba, #00FFFF);
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(0, 255, 255, 0.8);
+        #start-btn:hover, #settings-btn:hover, #back-btn:hover, #save-settings-btn:hover, #main-menu-btn:hover, #restart-btn:hover, #game-over-settings-btn:hover, #leaderboard-btn:hover, #leaderboard-go-btn:hover, #rules-btn:hover, #resume-btn:hover, #pause-settings-btn:hover, #share-btn:hover, #redeem-code-btn:hover, #donateBtn:hover, #achievementsBtn:hover, #back-to-menu-achievements:hover, #shop-btn:hover, .shop-item-btn:hover, .debug-btn:hover, #debug-toggle-btn:hover, #tutorial-btn:hover, #copy-score-btn:hover, #challenge-friend-btn:hover, #save-prices-btn:hover {
+            background: #00baba;
+            transform: scale(1.1);
         }
         #theme-select, #ship-select, #bg-image-input, #bg-music-input, #game-volume, #music-volume, .color-picker, .sound-input, #code-input, #bullet-letter-input, #font-select, #game-mode-select, #pause-ship-select, #pause-bullet-letter-input, #music-select, #challenge-score-input, .price-input {
-            padding: 8px;
-            font-size: 18px;
-            background: #000033;
+            padding: 5px;
+            font-size: 16px;
+            background: #000000;
             color: #FFFF00;
             border: 1px solid #00FFFF;
             border-radius: 5px;
-            margin: 8px;
-            box-shadow: inset 0 0 5px rgba(0, 255, 255, 0.3);
+            margin: 5px;
         }
         #player-name {
-            padding: 8px;
-            font-size: 18px;
-            background: #000033;
+            padding: 5px;
+            font-size: 16px;
+            background: #000000;
             color: #FFFF00;
             border: 1px solid #00FFFF;
             border-radius: 5px;
-            margin: 15px;
+            margin: 10px;
         }
         label {
             display: block;
-            margin: 10px 0;
-            color: #FFFF00;
-            text-shadow: 0 0 3px #FFFF00;
+            margin: 5px 0;
         }
         #score, #level, #coins {
-            font-family: 'Orbitron', Arial, sans-serif;
+            font-family: inherit;
             position: absolute;
             z-index: 10;
             display: none;
-            color: #00FFFF;
-            text-shadow: 0 0 5px #00FFFF;
         }
         #score { top: 10px; left: 10px; }
         #level { top: 10px; right: 60px; }
         #coins { top: 30px; left: 10px; }
+        #leaderboard {
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 16px;
+            max-height: 50vh;
+            overflow-y: auto;
+            position: absolute;
+            z-index: 10;
+        }
         #joystick {
             position: absolute;
             bottom: 20px;
@@ -256,12 +261,13 @@
             margin: 10px;
             display: inline-block;
         }
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-15px); }
+            60% { transform: translateY(-7px); }
         }
-        @keyframes slideIn {
-            from { transform: translate(-50%, -60%) scale(0.9); opacity: 0; }
+        @keyframes popIn {
+            from { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
             to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
         }
         .ship-option {
@@ -274,7 +280,6 @@
             margin-right: 5px;
         }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div id="menu" style="display: block;">
@@ -286,7 +291,6 @@
         <button id="leaderboard-btn" onclick="showLeaderboard('main')">Leaderboard</button>
         <button id="rules-btn" onclick="showRules()">Rules</button>
         <button id="achievementsBtn" onclick="showAchievements()">Achievements</button>
-        <div style="color: #FFFF00; margin: 10px;">Support the Creator:</div>
         <button id="donateBtn" onclick="window.open('https://www.paypal.me/kingphilosipher', '_blank')">Donate via PayPal</button>
         <button id="shop-btn" onclick="showShop()">Shop</button>
         <button id="tutorial-btn" onclick="showTutorial()">Tutorial</button>
@@ -372,7 +376,6 @@
         </div>
         <input type="text" id="code-input" placeholder="Enter code">
         <button id="redeem-code-btn" onclick="redeemCode()">Redeem Code</button>
-        <div style="color: #FFFF00; margin: 10px;">Unlock Premium Upgrade:</div>
         <div id="paypal-premium-container" class="paypal-buttons-container"></div>
         <button id="save-settings-btn" onclick="saveSettings()">Save Settings</button>
         <button id="back-btn" onclick="backToMenu()">Back</button>
@@ -711,27 +714,21 @@
 
         // Audio initialization
         function initAudioContext() {
-            try {
-                if (!audioCtx) {
-                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                    console.log('AudioContext initialized');
-                }
-                if (audioCtx.state === 'suspended') {
-                    audioCtx.resume().then(() => console.log('AudioContext resumed'));
-                }
-            } catch (err) {
-                console.error('AudioContext initialization failed:', err);
-                audioCtx = null; // Fallback to no audio
-                showMessage('Audio unavailable; continuing without sound.');
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
             }
         }
+        document.addEventListener('touchstart', initAudioContext, { once: true });
+        document.addEventListener('click', initAudioContext, { once: true });
 
         // Utility functions
         function showMessage(message) {
             const messageDiv = document.getElementById('messageDisplay');
             messageDiv.textContent = message;
             messageDiv.style.display = 'block';
-            console.log('Message displayed:', message);
             setTimeout(() => messageDiv.style.display = 'none', 3000);
         }
 
@@ -765,115 +762,107 @@
 
         // Settings management
         function loadSettings() {
-            console.log('Loading settings...');
-            try {
-                const savedImage = localStorage.getItem('customBgImage') || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAQSURBVHgBAW/5DwEBAQAGAAAA/gD3YdJDAgAAAABJRU5ErkJggg==';
-                const savedMusic = localStorage.getItem('customBgMusic') || musicSelect.value;
-                const savedTheme = localStorage.getItem('theme');
-                const savedShip = localStorage.getItem('shipType');
-                const savedBulletLetter = localStorage.getItem('bulletLetter');
-                const savedGameVolume = localStorage.getItem('gameVolume');
-                const savedMusicVolume = localStorage.getItem('musicVolume');
-                const savedCustomTheme = JSON.parse(localStorage.getItem('customTheme'));
-                const savedSounds = JSON.parse(localStorage.getItem('customSounds')) || {};
-                const savedAIEnemies = localStorage.getItem('useAIEnemies') === 'true';
-                const savedFont = localStorage.getItem('font');
-                const savedSpeedBoost = localStorage.getItem('speedBoost') === 'true';
-                const savedShieldPack = localStorage.getItem('shieldPack') === 'true';
-                const savedCoins = parseInt(localStorage.getItem('playerCoins')) || 0;
-                const savedShipColor = localStorage.getItem('shipColor') || '#FFFF00';
+            const savedImage = localStorage.getItem('customBgImage');
+            const savedMusic = localStorage.getItem('customBgMusic');
+            const savedTheme = localStorage.getItem('theme');
+            const savedShip = localStorage.getItem('shipType');
+            const savedBulletLetter = localStorage.getItem('bulletLetter');
+            const savedGameVolume = localStorage.getItem('gameVolume');
+            const savedMusicVolume = localStorage.getItem('musicVolume');
+            const savedCustomTheme = JSON.parse(localStorage.getItem('customTheme'));
+            const savedSounds = JSON.parse(localStorage.getItem('customSounds')) || {};
+            const savedAIEnemies = localStorage.getItem('useAIEnemies') === 'true';
+            const savedFont = localStorage.getItem('font');
+            const savedSpeedBoost = localStorage.getItem('speedBoost') === 'true';
+            const savedShieldPack = localStorage.getItem('shieldPack') === 'true';
+            const savedCoins = parseInt(localStorage.getItem('playerCoins')) || 0;
+            const savedShipColor = localStorage.getItem('shipColor') || '#FFFF00';
 
-                if (isPremium) {
-                    bgImageInput.disabled = false;
-                    bgMusicInput.disabled = false;
-                    document.getElementById('premium-options').style.display = 'block';
-                    player.fireRate = 15;
-                    player.lives = 3;
-                    if (savedSpeedBoost) player.speedBoost = true;
-                    if (savedShieldPack) player.shieldPack = true;
-                }
-
-                customBgImage = new Image();
-                customBgImage.src = savedImage;
-                customBgImage.onload = () => {
-                    console.log('Background image loaded');
-                    drawBackground();
-                    document.body.style.backgroundImage = `url(${customBgImage.src})`;
-                    document.body.style.backgroundSize = 'cover';
-                };
-                customBgImage.onerror = () => {
-                    console.error('Background image load failed');
-                    customBgImage = null;
-                };
-
-                backgroundMusic = new Audio(savedMusic);
-                backgroundMusic.loop = true;
-                backgroundMusic.volume = isMuted ? 0 : musicVolumeLevel;
-                backgroundMusic.addEventListener('canplay', () => {
-                    console.log('Background music ready');
-                    if (!isMuted) backgroundMusic.play().catch(err => console.error('Music play failed:', err));
-                });
-                backgroundMusic.onerror = () => {
-                    console.error('Background music load failed');
-                    backgroundMusic = null;
-                };
-
-                if (savedTheme) {
-                    themeSelect.value = savedTheme;
-                    if (savedTheme === 'custom' && savedCustomTheme) {
-                        themes.custom = savedCustomTheme;
-                        document.getElementById('player-color').value = savedCustomTheme.playerColor;
-                        document.getElementById('pacman-color').value = savedCustomTheme.pacmanColor;
-                        document.getElementById('ghost-color').value = savedCustomTheme.ghostColor;
-                        document.getElementById('bullet-color').value = savedCustomTheme.bulletColor;
-                        document.getElementById('bg-color').value = savedCustomTheme.bgColor;
-                        document.getElementById('border-color').value = savedCustomTheme.borderColor;
-                        document.getElementById('button-color').value = savedCustomTheme.buttonColor;
-                        document.getElementById('menu-color').value = savedCustomTheme.menuColor;
-                        document.getElementById('text-color').value = savedCustomTheme.textColor;
-                    }
-                }
-                if (savedShip && ownedShips.includes(savedShip)) player.shipType = savedShip;
-                if (savedBulletLetter) {
-                    player.bulletLetter = savedBulletLetter;
-                    bulletLetterInput.value = savedBulletLetter;
-                    pauseBulletLetterInput.value = savedBulletLetter;
-                }
-                if (savedGameVolume) {
-                    gameVolumeLevel = parseFloat(savedGameVolume);
-                    gameVolume.value = gameVolumeLevel;
-                }
-                if (savedMusicVolume) {
-                    musicVolumeLevel = parseFloat(savedMusicVolume);
-                    musicVolume.value = musicVolumeLevel;
-                    if (backgroundMusic) backgroundMusic.volume = isMuted ? 0 : musicVolumeLevel;
-                }
-                for (let sound in savedSounds) {
-                    if (savedSounds[sound]) customSounds[sound] = new Audio(savedSounds[sound]);
-                }
-                if (isPremium && savedAIEnemies) {
-                    useAIEnemies = true;
-                    aiEnemiesCheckbox.checked = true;
-                }
-                if (isPremium && savedFont) {
-                    fontSelect.value = savedFont;
-                    changeFont();
-                }
-                player.coins = savedCoins;
-                player.shipColor = savedShipColor;
-                shipColorPicker.value = savedShipColor;
-                coinsDisplay.textContent = `Coins: ${player.coins}`;
-                applyTheme();
-                updateLeaderboardDisplay();
-                updateShipSelect(shipSelect);
-                updateShipSelect(pauseShipSelect);
-                checkDailyReward();
-                updatePriceInputs();
-                console.log('Settings loaded successfully');
-            } catch (err) {
-                console.error('Settings load failed:', err);
-                showMessage('Error loading settings. Using defaults.');
+            if (isPremium) {
+                bgImageInput.disabled = false;
+                bgMusicInput.disabled = false;
+                document.getElementById('premium-options').style.display = 'block';
+                player.fireRate = 15;
+                player.lives = 3;
+                if (savedSpeedBoost) player.speedBoost = true;
+                if (savedShieldPack) player.shieldPack = true;
             }
+
+            customBgImage = new Image();
+            customBgImage.src = savedImage && isPremium ? savedImage : 'assets/background.jpg';
+            customBgImage.onload = () => {
+                drawBackground();
+                document.body.style.backgroundImage = `url(${customBgImage.src})`;
+                document.body.style.backgroundSize = 'cover';
+                showMessage('Background image loaded!');
+            };
+            customBgImage.onerror = () => {
+                console.error('Error loading background image');
+                showMessage('Failed to load background image.');
+                customBgImage.src = 'assets/background.jpg';
+            };
+
+            backgroundMusic = new Audio(savedMusic && isPremium ? savedMusic : musicSelect.value);
+            backgroundMusic.loop = true;
+            backgroundMusic.volume = 0;
+            backgroundMusic.play().then(() => {
+                backgroundMusic.volume = isMuted ? 0 : musicVolumeLevel;
+            }).catch(err => {
+                console.error('Error playing background music:', err);
+                showMessage('Failed to play background music.');
+            });
+
+            if (savedTheme) {
+                themeSelect.value = savedTheme;
+                if (savedTheme === 'custom' && savedCustomTheme) {
+                    themes.custom = savedCustomTheme;
+                    document.getElementById('player-color').value = savedCustomTheme.playerColor;
+                    document.getElementById('pacman-color').value = savedCustomTheme.pacmanColor;
+                    document.getElementById('ghost-color').value = savedCustomTheme.ghostColor;
+                    document.getElementById('bullet-color').value = savedCustomTheme.bulletColor;
+                    document.getElementById('bg-color').value = savedCustomTheme.bgColor;
+                    document.getElementById('border-color').value = savedCustomTheme.borderColor;
+                    document.getElementById('button-color').value = savedCustomTheme.buttonColor;
+                    document.getElementById('menu-color').value = savedCustomTheme.menuColor;
+                    document.getElementById('text-color').value = savedCustomTheme.textColor;
+                }
+            }
+            if (savedShip && ownedShips.includes(savedShip)) player.shipType = savedShip;
+            if (savedBulletLetter) {
+                player.bulletLetter = savedBulletLetter;
+                bulletLetterInput.value = savedBulletLetter;
+                pauseBulletLetterInput.value = savedBulletLetter;
+            }
+            if (savedGameVolume) {
+                gameVolumeLevel = parseFloat(savedGameVolume);
+                gameVolume.value = gameVolumeLevel;
+            }
+            if (savedMusicVolume) {
+                musicVolumeLevel = parseFloat(savedMusicVolume);
+                musicVolume.value = musicVolumeLevel;
+                if (backgroundMusic) backgroundMusic.volume = isMuted ? 0 : musicVolumeLevel;
+            }
+            for (let sound in savedSounds) {
+                if (savedSounds[sound]) customSounds[sound] = new Audio(savedSounds[sound]);
+            }
+            if (isPremium && savedAIEnemies) {
+                useAIEnemies = true;
+                aiEnemiesCheckbox.checked = true;
+            }
+            if (isPremium && savedFont) {
+                fontSelect.value = savedFont;
+                changeFont();
+            }
+            player.coins = savedCoins;
+            player.shipColor = savedShipColor;
+            shipColorPicker.value = savedShipColor;
+            coinsDisplay.textContent = `Coins: ${player.coins}`;
+            applyTheme();
+            updateLeaderboardDisplay();
+            updateShipSelect(shipSelect);
+            updateShipSelect(pauseShipSelect);
+            checkDailyReward();
+            updatePriceInputs();
         }
 
         function updatePriceInputs() {
@@ -896,23 +885,22 @@
         }
 
         function applyTheme() {
-            console.log('Applying theme:', themeSelect.value);
             theme = themes[themeSelect.value];
             canvas.style.borderColor = theme.borderColor;
             const buttons = document.querySelectorAll('button:not(#sound-btn):not(#shoot-btn):not(#pause-resume-btn):not(#debug-toggle-btn)');
-            buttons.forEach(btn => btn.style.background = `linear-gradient(45deg, ${theme.buttonColor}, #00baba)`);
+            buttons.forEach(btn => btn.style.background = theme.buttonColor);
             shootBtn.style.background = `rgba(${parseInt(theme.buttonColor.slice(1,3), 16)}, ${parseInt(theme.buttonColor.slice(3,5), 16)}, ${parseInt(theme.buttonColor.slice(5,7), 16)}, 0.5)`;
-            menu.style.background = `linear-gradient(135deg, rgba(${parseInt(theme.menuColor.slice(1,3), 16)}, ${parseInt(theme.menuColor.slice(3,5), 16)}, ${parseInt(theme.menuColor.slice(5,7), 16)}, 0.9), rgba(0, 0, 0, 0.8))`;
-            settingsMenu.style.background = menu.style.background;
+            menu.style.background = theme.menuColor;
+            settingsMenu.style.background = theme.menuColor;
             gameOverMenu.style.background = `rgba(${parseInt(theme.menuColor.slice(1,3), 16)}, ${parseInt(theme.menuColor.slice(3,5), 16)}, ${parseInt(theme.menuColor.slice(5,7), 16)}, 0.8)`;
-            pauseMenu.style.background = gameOverMenu.style.background;
-            achievementsMenu.style.background = gameOverMenu.style.background;
-            shopMenu.style.background = gameOverMenu.style.background;
+            pauseMenu.style.background = `rgba(${parseInt(theme.menuColor.slice(1,3), 16)}, ${parseInt(theme.menuColor.slice(3,5), 16)}, ${parseInt(theme.menuColor.slice(5,7), 16)}, 0.8)`;
+            achievementsMenu.style.background = `rgba(${parseInt(theme.menuColor.slice(1,3), 16)}, ${parseInt(theme.menuColor.slice(3,5), 16)}, ${parseInt(theme.menuColor.slice(5,7), 16)}, 0.8)`;
+            shopMenu.style.background = `rgba(${parseInt(theme.menuColor.slice(1,3), 16)}, ${parseInt(theme.menuColor.slice(3,5), 16)}, ${parseInt(theme.menuColor.slice(5,7), 16)}, 0.8)`;
             debugMenu.style.background = `rgba(${parseInt(theme.menuColor.slice(1,3), 16)}, ${parseInt(theme.menuColor.slice(3,5), 16)}, ${parseInt(theme.menuColor.slice(5,7), 16)}, 0.5)`;
-            tutorialMenu.style.background = gameOverMenu.style.background;
+            tutorialMenu.style.background = `rgba(${parseInt(theme.menuColor.slice(1,3), 16)}, ${parseInt(theme.menuColor.slice(3,5), 16)}, ${parseInt(theme.menuColor.slice(5,7), 16)}, 0.8)`;
             document.querySelectorAll('#menu, #settings-menu, #game-over-menu, #pause-menu, #achievements-menu, #shop-menu, #debug-menu, #tutorial-menu, #score, #level, #coins, #final-score, #leaderboard, label, #made-by, .shop-item-name').forEach(el => {
                 el.style.color = theme.textColor;
-                el.style.fontFamily = fontSelect.value || 'Orbitron';
+                el.style.fontFamily = fontSelect.value || 'Arial';
             });
             customThemeDiv.style.display = themeSelect.value === 'custom' ? 'block' : 'none';
         }
@@ -945,7 +933,7 @@
         }
 
         function updateBulletLetter() {
-            player.bulletLetter = bulletLetterInput.value.toUpperCase() ||             'B';
+            player.bulletLetter = bulletLetterInput.value.toUpperCase() || 'B';
             localStorage.setItem('bulletLetter', player.bulletLetter);
             pauseBulletLetterInput.value = player.bulletLetter;
         }
@@ -963,21 +951,14 @@
         }
 
         function changeMusic() {
-            console.log('Changing music to:', musicSelect.value);
-            if (backgroundMusic) {
-                backgroundMusic.pause();
-            }
-            backgroundMusic = new Audio(musicSelect.value);
+            backgroundMusic.src = musicSelect.value;
             backgroundMusic.loop = true;
             backgroundMusic.volume = isMuted ? 0 : musicVolumeLevel;
-            backgroundMusic.addEventListener('canplay', () => {
-                if (!isMuted) backgroundMusic.play().catch(err => console.error('Music play failed:', err));
-            });
+            if (!isMuted) backgroundMusic.play().catch(() => showMessage('Failed to play music.'));
             localStorage.setItem('customBgMusic', musicSelect.value);
         }
 
         function redeemCode() {
-            console.log('Redeeming code:', codeInput.value);
             const code = codeInput.value.trim().toLowerCase();
             switch (code) {
                 case 'philo debug':
@@ -1049,21 +1030,20 @@
         function toggleMute() {
             isMuted = !isMuted;
             if (isMuted) {
-                if (backgroundMusic) backgroundMusic.volume = 0;
+                backgroundMusic.volume = 0;
                 for (let sound in customSounds) {
                     if (customSounds[sound]) customSounds[sound].volume = 0;
                 }
                 soundBtn.textContent = '🔇';
                 soundBtn.classList.add('muted');
             } else {
-                if (backgroundMusic) backgroundMusic.volume = musicVolumeLevel;
+                backgroundMusic.volume = musicVolumeLevel;
                 for (let sound in customSounds) {
                     if (customSounds[sound]) customSounds[sound].volume = gameVolumeLevel;
                 }
                 soundBtn.textContent = '🔊';
                 soundBtn.classList.remove('muted');
             }
-            console.log('Mute toggled:', isMuted);
         }
 
         function uploadBackgroundImage() {
@@ -1082,7 +1062,6 @@
                 customBgImage = new Image();
                 customBgImage.src = url;
                 customBgImage.onload = () => {
-                    console.log('Uploaded background image loaded');
                     drawBackground();
                     document.body.style.backgroundImage = `url(${customBgImage.src})`;
                     document.body.style.backgroundSize = 'cover';
@@ -1090,9 +1069,8 @@
                     showMessage('Background image uploaded successfully!');
                 };
                 customBgImage.onerror = () => {
-                    console.error('Uploaded background image failed to load');
+                    showMessage('Failed to load uploaded image. Please try again.');
                     customBgImage = null;
-                    showMessage('Failed to load uploaded image. Using default.');
                 };
             } else {
                 showMessage('Please upload a valid PNG or JPG image.');
@@ -1112,14 +1090,11 @@
             const extension = file.name.split('.').pop().toLowerCase();
             if (extension === 'mp3') {
                 const url = URL.createObjectURL(file);
-                if (backgroundMusic) backgroundMusic.pause();
-                backgroundMusic = new Audio(url);
+                backgroundMusic.src = url;
                 backgroundMusic.loop = true;
                 backgroundMusic.volume = isMuted ? 0 : musicVolumeLevel;
-                backgroundMusic.addEventListener('canplay', () => {
-                    if (!isMuted) backgroundMusic.play().catch(err => console.error('Uploaded music play failed:', err));
-                });
                 localStorage.setItem('customBgMusic', url);
+                if (!isMuted) backgroundMusic.play().catch(() => showMessage('Failed to play uploaded music.'));
                 showMessage('Background music uploaded successfully!');
             } else {
                 showMessage('Please upload a valid MP3 file.');
@@ -1144,53 +1119,47 @@
         }
 
         function saveSettings() {
-            console.log('Saving settings...');
-            try {
-                if (customBgImage && customBgImage.src) localStorage.setItem('customBgImage', customBgImage.src);
-                if (backgroundMusic && backgroundMusic.src) localStorage.setItem('customBgMusic', backgroundMusic.src);
-                localStorage.setItem('theme', themeSelect.value);
-                localStorage.setItem('shipType', player.shipType);
-                localStorage.setItem('bulletLetter', player.bulletLetter);
-                localStorage.setItem('gameVolume', gameVolume.value);
-                localStorage.setItem('musicVolume', musicVolume.value);
-                localStorage.setItem('achievements', JSON.stringify(achievements));
-                localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
-                localStorage.setItem('isPremium', isPremium);
-                localStorage.setItem('useAIEnemies', useAIEnemies);
-                localStorage.setItem('font', fontSelect.value);
-                localStorage.setItem('speedBoost', player.speedBoost);
-                localStorage.setItem('shieldPack', player.shieldPack);
-                localStorage.setItem('playerCoins', player.coins);
-                localStorage.setItem('shipColor', player.shipColor);
-                gameVolumeLevel = parseFloat(gameVolume.value);
-                musicVolumeLevel = parseFloat(musicVolume.value);
-                player.shipColor = shipColorPicker.value;
-                if (backgroundMusic) backgroundMusic.volume = isMuted ? 0 : musicVolumeLevel;
-                if (themeSelect.value === 'custom') {
-                    themes.custom = {
-                        playerColor: document.getElementById('player-color').value,
-                        pacmanColor: document.getElementById('pacman-color').value,
-                        ghostColor: document.getElementById('ghost-color').value,
-                        bulletColor: document.getElementById('bullet-color').value,
-                        bgColor: document.getElementById('bg-color').value,
-                        borderColor: document.getElementById('border-color').value,
-                        buttonColor: document.getElementById('button-color').value,
-                        menuColor: document.getElementById('menu-color').value,
-                        textColor: document.getElementById('text-color').value
-                    };
-                    localStorage.setItem('customTheme', JSON.stringify(themes.custom));
-                }
-                const savedSounds = {};
-                for (let sound in customSounds) {
-                    if (customSounds[sound] && customSounds[sound].src) savedSounds[sound] = customSounds[sound].src;
-                }
-                localStorage.setItem('customSounds', JSON.stringify(savedSounds));
-                applyTheme();
-                showMessage('Settings saved!');
-            } catch (err) {
-                console.error('Error saving settings:', err);
-                showMessage('Failed to save settings!');
+            if (customBgImage) localStorage.setItem('customBgImage', customBgImage.src);
+            if (backgroundMusic) localStorage.setItem('customBgMusic', backgroundMusic.src);
+            localStorage.setItem('theme', themeSelect.value);
+            localStorage.setItem('shipType', player.shipType);
+            localStorage.setItem('bulletLetter', player.bulletLetter);
+            localStorage.setItem('gameVolume', gameVolume.value);
+            localStorage.setItem('musicVolume', musicVolume.value);
+            localStorage.setItem('achievements', JSON.stringify(achievements));
+            localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
+            localStorage.setItem('isPremium', isPremium);
+            localStorage.setItem('useAIEnemies', useAIEnemies);
+            localStorage.setItem('font', fontSelect.value);
+            localStorage.setItem('speedBoost', player.speedBoost);
+            localStorage.setItem('shieldPack', player.shieldPack);
+            localStorage.setItem('playerCoins', player.coins);
+            localStorage.setItem('shipColor', player.shipColor);
+            gameVolumeLevel = parseFloat(gameVolume.value);
+            musicVolumeLevel = parseFloat(musicVolume.value);
+            player.shipColor = shipColorPicker.value;
+            if (backgroundMusic) backgroundMusic.volume = isMuted ? 0 : musicVolumeLevel;
+            if (themeSelect.value === 'custom') {
+                themes.custom = {
+                    playerColor: document.getElementById('player-color').value,
+                    pacmanColor: document.getElementById('pacman-color').value,
+                    ghostColor: document.getElementById('ghost-color').value,
+                    bulletColor: document.getElementById('bullet-color').value,
+                    bgColor: document.getElementById('bg-color').value,
+                    borderColor: document.getElementById('border-color').value,
+                    buttonColor: document.getElementById('button-color').value,
+                    menuColor: document.getElementById('menu-color').value,
+                    textColor: document.getElementById('text-color').value
+                };
+                localStorage.setItem('customTheme', JSON.stringify(themes.custom));
             }
+            const savedSounds = {};
+            for (let sound in customSounds) {
+                if (customSounds[sound]) savedSounds[sound] = customSounds[sound].src;
+            }
+            localStorage.setItem('customSounds', JSON.stringify(savedSounds));
+            applyTheme();
+            showMessage('Settings saved!');
         }
 
         function updateLeaderboardDisplay() {
@@ -1215,27 +1184,33 @@
                 rulesSection.style.display = 'block';
                 rulesSection.innerHTML = `
                     <strong>Rules of Space Pac-Invaders:</strong><br>
-                    1. <strong>Controls:</strong> Move with arrow keys (PC) or joystick (mobile). Shoot with spacebar (PC) or shoot button (mobile).<br>
-                    2. <strong>Objective:</strong> Destroy Pac-Men (50 points, 10 coins) and collect ghosts (50 points, 5 coins).<br>
-                    3. <strong>Lives:</strong> Avoid enemies. Non-premium: 1 life, premium: 3 lives.<br>
-                    4. <strong>Levels:</strong> Clear enemies to level up. Boss every 5 levels.<br>
-                    5. <strong>Modes:</strong> Classic, Endless, Survival.<br>`;
+                    1. <strong>Controls:</strong> Move your ship with arrow keys (PC) or joystick (mobile). Shoot with spacebar (PC) or shoot button (mobile). Special abilities: 'B' for bombs (Bomber ship), 'R' for radar (Scout ship).<br>
+                    2. <strong>Objective:</strong> Destroy Pac-Men (50 points, 10 coins each) and collect ghosts (50 points, 5 coins each) to earn points and coins.<br>
+                    3. <strong>Lives:</strong> Avoid Pac-Men and bosses (2x damage). Non-premium starts with 1 life, premium with 3. Shields protect temporarily.<br>
+                    4. <strong>Levels & Bosses:</strong> Clear Pac-Men to advance levels in Classic mode. Every 5 levels, face a boss (500 points, 100 coins, more health).<br>
+                    5. <strong>Game Modes:</strong> Classic (level-based), Endless (infinite enemies), Survival (fast enemies, limited lives). Switch modes in pause menu.<br>
+                    6. <strong>Upgrades:</strong> Collect power-ups (gun, ship, shield, speed, multi-shot) for temporary boosts (e.g., 10-second speed increase).<br>
+                    7. <strong>Ships:</strong> Choose ships with unique abilities (e.g., Bomber drops bombs, Scout has radar). Non-premium starts with Scout, Ranger, Blaster.<br>
+                    8. <strong>Coins:</strong> Earn coins from Pac-Men, ghosts, levels (50 coins), and daily login (100 coins). Spend in shop or save for upgrades.<br>
+                    9. <strong>Shop:</strong> Buy ships (£1), random AI ships (£0.50), Speed Boost (£2), Shield Pack (£3) with real money via PayPal.<br>
+                    10. <strong>Scoring:</strong> Track scores locally. Share or copy scores from game-over menu. Challenge friends by beating their scores.<br>
+                    11. <strong>Achievements:</strong> Unlock rewards (e.g., Pac-Man Slayer: 50 kills, Boss Buster: 5 bosses) visible in Achievements menu.<br>
+                    12. <strong>Customization:</strong> Change ship color, bullet letter, theme, music, and sounds (premium only for some options) in Settings.<br>
+                    13. <strong>Premium:</strong> Unlock faster fire rate, extra lives, AI enemies, custom fonts/themes via shop purchase or special codes.<br>
+                    14. <strong>Pause/Mute:</strong> Pause with top-center button, mute with top-right button during gameplay.<br>
+                    15. <strong>Tips:</strong> Use shields strategically, master ship abilities, and aim for daily rewards to boost progress!`;
             }
         }
 
         function showAchievements() {
-            menu.style.transform = 'translate(-50%, -50%) scale(0.9)';
             menu.style.opacity = '0';
             setTimeout(() => {
                 menu.style.display = 'none';
-                menu.style.transform = 'translate(-50%, -50%) scale(1)';
                 menu.style.opacity = '1';
                 achievementsMenu.style.display = 'block';
                 achievementsMenu.style.opacity = '0';
-                achievementsMenu.style.transform = 'translate(-50%, -60%) scale(0.9)';
                 setTimeout(() => {
                     achievementsMenu.style.opacity = '1';
-                    achievementsMenu.style.transform = 'translate(-50%, -50%) scale(1)';
                     updateAchievementsList();
                 }, 10);
             }, 500);
@@ -1254,43 +1229,34 @@
         }
 
         function backToMenuFromAchievements() {
-            achievementsMenu.style.transform = 'translate(-50%, -50%) scale(0.9)';
             achievementsMenu.style.opacity = '0';
             setTimeout(() => {
                 achievementsMenu.style.display = 'none';
-                achievementsMenu.style.transform = 'translate(-50%, -50%) scale(1)';
                 achievementsMenu.style.opacity = '1';
                 menu.style.display = 'block';
                 menu.style.opacity = '0';
-                menu.style.transform = 'translate(-50%, -60%) scale(0.9)';
                 setTimeout(() => menu.style.opacity = '1', 10);
             }, 500);
         }
 
         function showShop() {
-            menu.style.transform = 'translate(-50%, -50%) scale(0.9)';
             menu.style.opacity = '0';
             setTimeout(() => {
                 menu.style.display = 'none';
-                menu.style.transform = 'translate(-50%, -50%) scale(1)';
                 menu.style.opacity = '1';
                 shopMenu.style.display = 'block';
                 shopMenu.style.opacity = '0';
-                shopMenu.style.transform = 'translate(-50%, -60%) scale(0.9)';
                 setTimeout(() => shopMenu.style.opacity = '1', 10);
             }, 500);
         }
 
         function backToMenuFromShop() {
-            shopMenu.style.transform = 'translate(-50%, -50%) scale(0.9)';
             shopMenu.style.opacity = '0';
             setTimeout(() => {
                 shopMenu.style.display = 'none';
-                shopMenu.style.transform = 'translate(-50%, -50%) scale(1)';
                 shopMenu.style.opacity = '1';
                 menu.style.display = 'block';
                 menu.style.opacity = '0';
-                menu.style.transform = 'translate(-50%, -60%) scale(0.9)';
                 setTimeout(() => menu.style.opacity = '1', 10);
             }, 500);
         }
@@ -1300,7 +1266,11 @@
             debugToggleBtn.style.display = 'flex';
             debugMenu.style.display = 'block';
             debugMenu.style.opacity = '0';
+            debugMenu.style.top = '60px';
+            debugMenu.style.background = 'rgba(0, 0, 0, 0.5)';
+            debugMenu.style.maxHeight = 'calc(100vh - 70px)';
             setTimeout(() => debugMenu.style.opacity = '1', 10);
+            updatePriceInputs();
         }
 
         function toggleDebugMenu() {
@@ -1310,16 +1280,18 @@
             } else {
                 debugMenu.style.display = 'block';
                 debugMenu.style.opacity = '0';
+                debugMenu.style.top = '60px';
+                debugMenu.style.background = 'rgba(0, 0, 0, 0.5)';
+                debugMenu.style.maxHeight = 'calc(100vh - 70px)';
                 setTimeout(() => debugMenu.style.opacity = '1', 10);
+                updatePriceInputs();
             }
         }
 
         function showTutorial() {
-            menu.style.transform = 'translate(-50%, -50%) scale(0.9)';
             menu.style.opacity = '0';
             setTimeout(() => {
                 menu.style.display = 'none';
-                menu.style.transform = 'translate(-50%, -50%) scale(1)';
                 menu.style.opacity = '1';
                 tutorialMenu.style.display = 'block';
                 tutorialMenu.style.opacity = '0';
@@ -1327,19 +1299,21 @@
                     tutorialMenu.style.opacity = '1';
                     document.getElementById('tutorial-content').innerHTML = `
                         <strong>Tutorial:</strong><br>
-                        1. Move with arrow keys or joystick.<br>
-                        2. Shoot Pac-Men for points.<br>
-                        3. Avoid crashing into enemies!`;
+                        1. <strong>Controls:</strong> Use arrow keys (PC) or joystick (mobile) to move your ship. Press spacebar (PC) or shoot button (mobile) to fire.<br>
+                        2. <strong>Objective:</strong> Shoot Pac-Men to earn points (50 each) and coins (10 each). Collect ghosts for bonus points (50) and coins (5).<br>
+                        3. <strong>Upgrades:</strong> Grab power-ups like speed boosts (yellow) or multi-shot (purple) for temporary advantages.<br>
+                        4. <strong>Bosses:</strong> Every 5 levels, face a boss with more health and unique attacks. Defeat for 500 points and 100 coins.<br>
+                        5. <strong>Ships:</strong> Each ship has a unique ability (e.g., Bomber drops bombs, Scout has radar). Choose wisely!<br>
+                        6. <strong>Coins:</strong> Use coins in the shop to buy items, or spend real money for premium options.<br>
+                        7. <strong>Tip:</strong> Stay alive by avoiding Pac-Men, and use shields to survive longer!`;
                 }, 10);
             }, 500);
         }
 
         function backToMenuFromTutorial() {
-            tutorialMenu.style.transform = 'translate(-50%, -50%) scale(0.9)';
             tutorialMenu.style.opacity = '0';
             setTimeout(() => {
                 tutorialMenu.style.display = 'none';
-                tutorialMenu.style.transform = 'translate(-50%, -50%) scale(1)';
                 tutorialMenu.style.opacity = '1';
                 menu.style.display = 'block';
                 menu.style.opacity = '0';
@@ -1349,7 +1323,7 @@
 
         function toggleAIEnemies() {
             if (!isPremium) {
-                showMessage('Premium required for AI enemies!');
+                showMessage('Premium required to use AI-generated enemies!');
                 aiEnemiesCheckbox.checked = false;
                 return;
             }
@@ -1362,7 +1336,7 @@
         function changeFont() {
             if (!isPremium) {
                 showMessage('Premium required to change font!');
-                fontSelect.value = 'Orbitron';
+                fontSelect.value = 'Arial';
                 return;
             }
             localStorage.setItem('font', fontSelect.value);
@@ -1377,62 +1351,107 @@
                 localStorage.setItem('playerCoins', player.coins);
                 localStorage.setItem('lastLogin', today);
                 coinsDisplay.textContent = `Coins: ${player.coins}`;
-                showMessage('Daily reward: 100 coins!');
+                showMessage('Daily reward granted: 100 coins!');
             }
         }
 
         // Sound effects
         function playSound(type) {
             if (isMuted || !audioCtx) return;
-            try {
-                if (customSounds[type]) {
-                    customSounds[type].currentTime = 0;
-                    customSounds[type].volume = gameVolumeLevel;
-                    customSounds[type].play().catch(err => console.error(`Sound ${type} play failed:`, err));
-                } else {
-                    const osc = audioCtx.createOscillator();
-                    const gainNode = audioCtx.createGain();
-                    osc.connect(gainNode);
-                    gainNode.connect(audioCtx.destination);
-                    osc.type = 'square';
-                    osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-                    gainNode.gain.setValueAtTime(gameVolumeLevel * 0.2, audioCtx.currentTime);
-                    osc.start();
-                    osc.stop(audioCtx.currentTime + 0.1);
+            if (customSounds[type]) {
+                customSounds[type].currentTime = 0;
+                customSounds[type].volume = gameVolumeLevel;
+                customSounds[type].play().catch(() => {});
+            } else {
+                const osc = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                switch(type) {
+                    case 'waka':
+                        osc.type = 'square';
+                        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+                        osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
+                        gainNode.gain.setValueAtTime(gameVolumeLevel * 0.2, audioCtx.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                        osc.start();
+                        osc.stop(audioCtx.currentTime + 0.2);
+                        break;
+                    case 'death':
+                        osc.type = 'square';
+                        osc.frequency.setValueAtTime(784, audioCtx.currentTime);
+                        osc.frequency.exponentialRampToValueAtTime(523, audioCtx.currentTime + 0.3);
+                        gainNode.gain.setValueAtTime(gameVolumeLevel * 0.3, audioCtx.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                        osc.start();
+                        osc.stop(audioCtx.currentTime + 0.3);
+                        break;
+                    case 'shoot':
+                        osc.type = 'square';
+                        osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+                        osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.1);
+                        gainNode.gain.setValueAtTime(gameVolumeLevel * 0.2, audioCtx.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                        osc.start();
+                        osc.stop(audioCtx.currentTime + 0.1);
+                        break;
+                    case 'enemyHit':
+                        osc.type = 'square';
+                        osc.frequency.setValueAtTime(220, audioCtx.currentTime);
+                        osc.frequency.exponentialRampToValueAtTime(110, audioCtx.currentTime + 0.15);
+                        gainNode.gain.setValueAtTime(gameVolumeLevel * 0.25, audioCtx.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                        osc.start();
+                        osc.stop(audioCtx.currentTime + 0.15);
+                        break;
+                    case 'upgrade':
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+                        osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.2);
+                        gainNode.gain.setValueAtTime(gameVolumeLevel * 0.3, audioCtx.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                        osc.start();
+                        osc.stop(audioCtx.currentTime + 0.3);
+                        break;
+                    case 'bomb':
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(110, audioCtx.currentTime);
+                        osc.frequency.exponentialRampToValueAtTime(55, audioCtx.currentTime + 0.5);
+                        gainNode.gain.setValueAtTime(gameVolumeLevel * 0.4, audioCtx.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                        osc.start();
+                        osc.stop(audioCtx.currentTime + 0.5);
+                        break;
                 }
-            } catch (err) {
-                console.error(`Error playing sound ${type}:`, err);
             }
         }
 
         // Game initialization
         function initBackground() {
-            console.log('Initializing background...');
             backgroundStars = [];
-            for (let i = 0; i < 100; i++) { // Reduced to 100 stars to lessen load
+            for (let i = 0; i < 300; i++) {
                 backgroundStars.push({
                     x: Math.random() * canvas.width,
                     y: Math.random() * canvas.height,
-                    size: Math.random() * 3 + 1,
+                    size: Math.random() * 5 + 1,
                     speed: Math.random() * 0.5 + 0.5,
-                    color: '#FFFFFF'
+                    color: Math.random() < 0.8 ? '#FFFFFF' : theme.playerColor
                 });
             }
         }
 
         function initLevel() {
-            console.log('Initializing level:', level);
             pacmen = [];
             ghosts = [];
             upgrades = [];
             bosses = [];
-            let pacmanCount = gameMode === 'endless' ? 5 : Math.min(level * 2, 10); // Cap at 10 to reduce load
+            let pacmanCount = gameMode === 'endless' ? 10 : level * 3;
             for (let i = 0; i < pacmanCount; i++) {
                 pacmen.push({
                     x: Math.random() * (canvas.width - 40),
                     y: -40,
                     size: 40,
-                    speed: 1 + level * 0.2,
+                    speed: gameMode === 'survival' ? 2 + level * 0.5 : 1 + level * 0.5,
                     mouthAngle: 0,
                     mouthSpeed: 0.05,
                     spinAngle: 0,
@@ -1440,6 +1459,27 @@
                     isAI: useAIEnemies && Math.random() < 0.5,
                     targetX: player.x,
                     targetY: player.y
+                });
+            }
+            if (level % 5 === 0) {
+                bosses.push({
+                    x: canvas.width / 2 - 50,
+                    y: -100,
+                    size: 100,
+                    speed: 1 + level * 0.2,
+                    health: 10 + level * 2,
+                    angle: 0,
+                    spinSpeed: 0.02
+                });
+            }
+            if (Math.random() < (isPremium ? 0.75 : 0.5)) {
+                upgrades.push({
+                    x: Math.random() * (canvas.width - 20),
+                    y: -20,
+                    size: 20,
+                    speed: 2,
+                    type: ['gun', 'ship', 'shield', 'speed', 'multi'][Math.floor(Math.random() * 5)],
+                    color: ['#FF0000', '#0000FF', '#00FF00', '#FFFF00', '#FF00FF'][Math.floor(Math.random() * 5)]
                 });
             }
         }
@@ -1457,7 +1497,6 @@
         }
 
         function init() {
-            console.log('Initializing game...');
             score = 0;
             level = 1;
             gameOver = false;
@@ -1473,8 +1512,15 @@
             player.bulletCount = 1;
             player.shipLevel = 0;
             player.frameCount = 0;
+            player.wheelAngle = 0;
+            player.propellerAngle = 0;
+            player.lightAngle = 0;
+            player.flameOffset = 0;
+            player.flapAngle = 0;
             player.shield = player.shieldPack ? 200 : 0;
             player.lives = isPremium ? 3 : 1;
+            player.bombCooldown = 0;
+            player.radarActive = false;
             isShooting = false;
             bullets = [];
             pacmen = [];
@@ -1482,6 +1528,7 @@
             upgrades = [];
             bosses = [];
             explosions = [];
+            ghostSpawnTimer = 0;
             gameOverMenu.style.display = 'none';
             pauseMenu.style.display = 'none';
             achievementsMenu.style.display = 'none';
@@ -1505,12 +1552,10 @@
                 showMessage('Please enter your name!');
                 return;
             }
-            console.log('Starting game...');
-            menu.style.transform = 'translate(-50%, -50%) scale(0.9)';
+            initAudioContext();
             menu.style.opacity = '0';
             setTimeout(() => {
                 menu.style.display = 'none';
-                menu.style.transform = 'translate(-50%, -50%) scale(1)';
                 menu.style.opacity = '1';
                 canvas.style.display = 'block';
                 scoreDisplay.style.display = 'block';
@@ -1521,37 +1566,30 @@
                     joystick.style.display = 'block';
                     shootBtn.style.display = 'block';
                 }
-                initAudioContext();
                 init();
-                setTimeout(() => {
-                    try {
-                        gameLoop();
-                    } catch (err) {
-                        console.error('Game loop failed to start:', err);
-                        crashRecovery('Game failed to start');
-                    }
-                }, 500); // Delay to allow resources to load
+                gameLoop();
             }, 500);
         }
 
         function restartGame() {
-            gameOverMenu.style.transform = 'translate(-50%, -50%) scale(0.9)';
             gameOverMenu.style.opacity = '0';
             setTimeout(() => {
                 gameOverMenu.style.display = 'none';
-                gameOverMenu.style.transform = 'translate(-50%, -50%) scale(1)';
                 gameOverMenu.style.opacity = '1';
+                document.getElementById('control-bar').style.display = 'flex';
+                if (isMobile) {
+                    joystick.style.display = 'block';
+                    shootBtn.style.display = 'block';
+                }
                 init();
                 gameLoop();
             }, 300);
         }
 
         function showSettings() {
-            menu.style.transform = 'translate(-50%, -50%) scale(0.9)';
             menu.style.opacity = '0';
             setTimeout(() => {
                 menu.style.display = 'none';
-                menu.style.transform = 'translate(-50%, -50%) scale(1)';
                 menu.style.opacity = '1';
                 settingsMenu.style.display = 'block';
                 settingsMenu.style.opacity = '0';
@@ -1560,11 +1598,9 @@
         }
 
         function showSettingsFromGameOver() {
-            gameOverMenu.style.transform = 'translate(-50%, -50%) scale(0.9)';
             gameOverMenu.style.opacity = '0';
             setTimeout(() => {
                 gameOverMenu.style.display = 'none';
-                gameOverMenu.style.transform = 'translate(-50%, -50%) scale(1)';
                 gameOverMenu.style.opacity = '1';
                 settingsMenu.style.display = 'block';
                 settingsMenu.style.opacity = '0';
@@ -1573,11 +1609,9 @@
         }
 
         function showSettingsFromPause() {
-            pauseMenu.style.transform = 'translate(-50%, -50%) scale(0.9)';
             pauseMenu.style.opacity = '0';
             setTimeout(() => {
                 pauseMenu.style.display = 'none';
-                pauseMenu.style.transform = 'translate(-50%, -50%) scale(1)';
                 pauseMenu.style.opacity = '1';
                 settingsMenu.style.display = 'block';
                 settingsMenu.style.opacity = '0';
@@ -1586,11 +1620,9 @@
         }
 
         function backToMenu() {
-            settingsMenu.style.transform = 'translate(-50%, -50%) scale(0.9)';
             settingsMenu.style.opacity = '0';
             setTimeout(() => {
                 settingsMenu.style.display = 'none';
-                settingsMenu.style.transform = 'translate(-50%, -50%) scale(1)';
                 settingsMenu.style.opacity = '1';
                 menu.style.display = 'block';
                 menu.style.opacity = '0';
@@ -1599,48 +1631,48 @@
         }
 
         function backToMainMenu() {
-            gameOverMenu.style.transform = 'translate(-50%, -50%) scale(0.9)';
             gameOverMenu.style.opacity = '0';
             setTimeout(() => {
                 gameOverMenu.style.display = 'none';
-                gameOverMenu.style.transform = 'translate(-50%, -50%) scale(1)';
                 gameOverMenu.style.opacity = '1';
                 menu.style.display = 'block';
                 menu.style.opacity = '0';
-                canvas.style.display = 'none';
-                scoreDisplay.style.display = 'none';
-                levelDisplay.style.display = 'none';
-                coinsDisplay.style.display = 'none';
-                joystick.style.display = 'none';
-                shootBtn.style.display = 'none';
-                document.getElementById('control-bar').style.display = 'none';
-                leaderboard.push({ name: playerNameInput.value.trim(), score: score });
-                localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
-                updateLeaderboardDisplay();
-                setTimeout(() => menu.style.opacity = '1', 10);
+                setTimeout(() => {
+                    menu.style.opacity = '1';
+                    canvas.style.display = 'none';
+                    scoreDisplay.style.display = 'none';
+                    levelDisplay.style.display = 'none';
+                    coinsDisplay.style.display = 'none';
+                    joystick.style.display = 'none';
+                    shootBtn.style.display = 'none';
+                    document.getElementById('control-bar').style.display = 'none';
+                    leaderboard.push({ name: playerNameInput.value.trim(), score: score });
+                    localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+                    updateLeaderboardDisplay();
+                }, 10);
             }, 300);
         }
 
         function backToMainMenuFromPause() {
-            pauseMenu.style.transform = 'translate(-50%, -50%) scale(0.9)';
             pauseMenu.style.opacity = '0';
             setTimeout(() => {
                 pauseMenu.style.display = 'none';
-                pauseMenu.style.transform = 'translate(-50%, -50%) scale(1)';
                 pauseMenu.style.opacity = '1';
                 menu.style.display = 'block';
                 menu.style.opacity = '0';
-                canvas.style.display = 'none';
-                scoreDisplay.style.display = 'none';
-                levelDisplay.style.display = 'none';
-                coinsDisplay.style.display = 'none';
-                joystick.style.display = 'none';
-                shootBtn.style.display = 'none';
-                document.getElementById('control-bar').style.display = 'none';
-                leaderboard.push({ name: playerNameInput.value.trim(), score: score });
-                localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
-                updateLeaderboardDisplay();
-                setTimeout(() => menu.style.opacity = '1', 10);
+                setTimeout(() => {
+                    menu.style.opacity = '1';
+                    canvas.style.display = 'none';
+                    scoreDisplay.style.display = 'none';
+                    levelDisplay.style.display = 'none';
+                    coinsDisplay.style.display = 'none';
+                    joystick.style.display = 'none';
+                    shootBtn.style.display = 'none';
+                    document.getElementById('control-bar').style.display = 'none';
+                    leaderboard.push({ name: playerNameInput.value.trim(), score: score });
+                    localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+                    updateLeaderboardDisplay();
+                }, 10);
             }, 300);
         }
 
@@ -1654,180 +1686,796 @@
                     pauseMenu.style.opacity = '0';
                     setTimeout(() => pauseMenu.style.opacity = '1', 10);
                     pauseResumeBtn.textContent = '▶️';
+                    pauseResumeBtn.classList.add('paused');
                 }
             }
         }
 
         function resumeGame() {
-            pauseMenu.style.transform = 'translate(-50%, -50%) scale(0.9)';
             pauseMenu.style.opacity = '0';
             setTimeout(() => {
                 pauseMenu.style.display = 'none';
-                pauseMenu.style.transform = 'translate(-50%, -50%) scale(1)';
                 pauseMenu.style.opacity = '1';
                 isPaused = false;
+                document.getElementById('control-bar').style.display = 'flex';
+                if (isMobile) {
+                    joystick.style.display = 'block';
+                    shootBtn.style.display = 'block';
+                }
                 pauseResumeBtn.textContent = '⏸️';
+                pauseResumeBtn.classList.remove('paused');
                 gameLoop();
             }, 300);
         }
 
-        // Crash recovery
-        function crashRecovery(message) {
-            gameOver = true;
-            showMessage(message);
-            console.error('Crash recovery triggered:', message);
-            setTimeout(() => backToMainMenu(), 2000);
-        }
-
         // Drawing functions
         function drawBackground() {
-            try {
+            if (customBgImage && customBgImage.complete) {
+                ctx.drawImage(customBgImage, 0, 0, canvas.width, canvas.height);
+            } else {
                 ctx.fillStyle = theme.bgColor;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                if (customBgImage && customBgImage.complete) {
-                    ctx.drawImage(customBgImage, 0, 0, canvas.width, canvas.height);
-                }
-                backgroundStars.forEach(star => {
-                    ctx.fillStyle = star.color;
-                    ctx.beginPath();
-                    ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-                    ctx.fill();
-                    star.y += star.speed;
-                    if (star.y > canvas.height) {
-                        star.y = -star.size;
-                        star.x = Math.random() * canvas.width;
-                    }
-                });
-            } catch (err) {
-                console.error('Error drawing background:', err);
             }
+            backgroundStars.forEach(star => {
+                ctx.fillStyle = star.color;
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+                star.y += star.speed;
+                if (star.y > canvas.height) {
+                    star.y = -star.size;
+                    star.x = Math.random() * canvas.width;
+                }
+            });
         }
 
         function drawPlayer() {
-            try {
-                ctx.save();
-                ctx.translate(player.x, player.y);
-                ctx.fillStyle = player.shipColor;
-                ctx.beginPath();
-                ctx.moveTo(0, -player.size / 2);
-                ctx.lineTo(player.size / 2, player.size / 2);
-                ctx.lineTo(-player.size / 2, player.size / 2);
-                ctx.closePath();
-                ctx.fill();
-                ctx.restore();
-            } catch (err) {
-                console.error('Error drawing player:', err);
+            ctx.save();
+            ctx.translate(player.x, player.y);
+            ctx.fillStyle = player.shipColor;
+
+            switch (player.shipType) {
+                case 'default':
+                    ctx.beginPath();
+                    ctx.moveTo(0, -player.size / 2);
+                    ctx.lineTo(player.size / 2, player.size / 2);
+                    ctx.lineTo(player.size / 3, player.size / 3);
+                    ctx.lineTo(0, 0);
+                    ctx.lineTo(-player.size / 3, player.size / 3);
+                    ctx.lineTo(-player.size / 2, player.size / 2);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.beginPath();
+                    ctx.arc(0, -player.size / 4, player.size / 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = `rgba(255, 69, 0, ${Math.sin(player.frameCount * 0.2) * 0.5 + 0.5})`;
+                    ctx.fillRect(-player.size / 4, player.size / 2, player.size / 2, 5 + Math.sin(player.frameCount * 0.1) * 3);
+                    break;
+
+                case 'car':
+                    ctx.fillRect(-player.size / 2, -player.size / 3, player.size, player.size / 2);
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(-player.size / 3, -player.size / 4, player.size / 1.5, player.size / 8);
+                    ctx.fillStyle = '#FFFF00';
+                    ctx.beginPath();
+                    ctx.arc(-player.size / 2.5, -player.size / 6, 3, 0, Math.PI * 2);
+                    ctx.arc(player.size / 2.5, -player.size / 6, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#000000';
+                    for (let i = -1; i <= 1; i += 2) {
+                        ctx.save();
+                        ctx.translate(i * player.size / 3, player.size / 6);
+                        ctx.rotate(player.wheelAngle);
+                        ctx.beginPath();
+                        ctx.arc(0, 0, player.size / 8, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+                    }
+                    break;
+
+                case 'plane':
+                    ctx.beginPath();
+                    ctx.moveTo(0, -player.size / 2);
+                    ctx.lineTo(player.size / 2, player.size / 4);
+                    ctx.lineTo(player.size / 3, player.size / 2);
+                    ctx.lineTo(-player.size / 3, player.size / 2);
+                    ctx.lineTo(-player.size / 2, player.size / 4);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.fillStyle = '#AAAAAA';
+                    ctx.fillRect(-player.size / 6, -player.size / 2, player.size / 3, player.size / 2);
+                    ctx.fillStyle = '#000000';
+                    ctx.save();
+                    ctx.translate(0, -player.size / 2);
+                    ctx.rotate(player.propellerAngle);
+                    ctx.fillRect(-player.size / 8, -player.size / 16, player.size / 4, player.size / 8);
+                    ctx.restore();
+                    break;
+
+                case 'ufo':
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, player.size / 2, player.size / 4, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#AAAAAA';
+                    ctx.beginPath();
+                    ctx.ellipse(0, -player.size / 8, player.size / 3, player.size / 6, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = `rgba(0, 255, 255, ${Math.sin(player.frameCount * 0.2) * 0.5 + 0.5})`;
+                    for (let i = -1; i <= 1; i += 2) {
+                        ctx.beginPath();
+                        ctx.arc(i * player.size / 3, player.size / 4, player.size / 12, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    break;
+
+                case 'spaceship':
+                    ctx.beginPath();
+                    ctx.moveTo(0, -player.size / 2);
+                    ctx.lineTo(player.size / 2, player.size / 3);
+                    ctx.lineTo(player.size / 3, player.size / 2);
+                    ctx.lineTo(-player.size / 3, player.size / 2);
+                    ctx.lineTo(-player.size / 2, player.size / 3);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.beginPath();
+                    ctx.arc(0, -player.size / 4, player.size / 10, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = `rgba(255, 165, 0, ${Math.sin(player.frameCount * 0.2) * 0.5 + 0.5})`;
+                    ctx.fillRect(-player.size / 4, player.size / 2, player.size / 2, 10);
+                    break;
+
+                case 'tank':
+                    ctx.fillRect(-player.size / 2, -player.size / 4, player.size, player.size / 2);
+                    ctx.fillStyle = '#666633';
+                    ctx.save();
+                    ctx.rotate(Math.sin(player.frameCount * 0.05) * 0.1);
+                    ctx.fillRect(-player.size / 8, -player.size / 2, player.size / 4, player.size / 2);
+                    ctx.restore();
+                    ctx.fillStyle = '#333333';
+                    for (let i = -2; i <= 2; i++) {
+                        ctx.fillRect(-player.size / 2 + i * player.size / 5, player.size / 4, player.size / 5, player.size / 8);
+                    }
+                    break;
+
+                case 'dragon':
+                    ctx.beginPath();
+                    ctx.moveTo(0, -player.size / 2);
+                    ctx.lineTo(player.size / 2, 0);
+                    ctx.lineTo(player.size / 3, player.size / 2);
+                    ctx.lineTo(-player.size / 3, player.size / 2);
+                    ctx.lineTo(-player.size / 2, 0);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.fillStyle = '#FF4500';
+                    ctx.beginPath();
+                    ctx.moveTo(0, -player.size / 2);
+                    ctx.lineTo(10 + Math.sin(player.frameCount * 0.1) * 5, -player.size / 2 - 15);
+                    ctx.lineTo(-10 - Math.sin(player.frameCount * 0.1) * 5, -player.size / 2 - 15);
+                    ctx.fill();
+                    break;
+
+                case 'cruiser':
+                    ctx.fillRect(-player.size / 2, -player.size / 2, player.size, player.size);
+                    ctx.fillStyle = '#AAAAAA';
+                    ctx.beginPath();
+                    ctx.arc(0, -player.size / 2, player.size / 4, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#FF0000';
+                    ctx.fillRect(-player.size / 4, 0, player.size / 8, player.size / 4);
+                    ctx.fillRect(player.size / 4 - player.size / 8, 0, player.size / 8, player.size / 4);
+                    break;
+
+                case 'bomber':
+                    ctx.beginPath();
+                    ctx.moveTo(0, -player.size / 2);
+                    ctx.lineTo(player.size / 2, player.size / 4);
+                    ctx.lineTo(player.size / 3, player.size / 2);
+                    ctx.lineTo(-player.size / 3, player.size / 2);
+                    ctx.lineTo(-player.size / 2, player.size / 4);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.fillStyle = '#666666';
+                    ctx.fillRect(-player.size / 4, 0, player.size / 2, player.size / 4);
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(-player.size / 6, player.size / 2, player.size / 3, player.size / 8);
+                    break;
+
+                case 'pirate':
+                    ctx.fillStyle = '#8B4513';
+                    ctx.beginPath();
+                    ctx.moveTo(-player.size / 2, player.size / 2);
+                    ctx.lineTo(player.size / 2, player.size / 2);
+                    ctx.lineTo(player.size / 3, -player.size / 4);
+                    ctx.lineTo(-player.size / 3, -player.size / 4);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.beginPath();
+                    ctx.moveTo(0, -player.size / 2);
+                    ctx.lineTo(player.size / 4, -player.size / 8 + Math.sin(player.frameCount * 0.05) * 5);
+                    ctx.lineTo(-player.size / 4, -player.size / 8 + Math.sin(player.frameCount * 0.05) * 5);
+                    ctx.fill();
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(-player.size / 3, 0, player.size / 8, player.size / 8);
+                    ctx.fillRect(player.size / 3 - player.size / 8, 0, player.size / 8, player.size / 8);
+                    ctx.fillStyle = '#FFD700';
+                    for (let i = 0; i < 3; i++) {
+                        ctx.beginPath();
+                        ctx.arc((Math.random() - 0.5) * player.size / 2, (Math.random() - 0.5) * player.size / 2, 2 + Math.sin(player.frameCount * 0.2 + i) * 2, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    break;
+
+                case 'scout':
+                    ctx.beginPath();
+                    ctx.moveTo(0, -player.size / 2);
+                    ctx.lineTo(player.size / 2, player.size / 2);
+                    ctx.lineTo(-player.size / 2, player.size / 2);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.fillStyle = '#00FF00';
+                    ctx.beginPath();
+                    ctx.arc(0, -player.size / 4, player.size / 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    if (player.radarActive) {
+                        ctx.strokeStyle = '#00FF00';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(0, 0, player.size * 2, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                    break;
+
+                case 'ranger':
+                    ctx.beginPath();
+                    ctx.moveTo(0, -player.size / 2);
+                    ctx.lineTo(player.size / 3, player.size / 2);
+                    ctx.lineTo(-player.size / 3, player.size / 2);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.fillStyle = '#FF00FF';
+                    ctx.fillRect(-player.size / 4, player.size / 2, player.size / 2, 5);
+                    break;
+
+                case 'blaster':
+                    ctx.beginPath();
+                    ctx.arc(0, 0, player.size / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.beginPath();
+                    ctx.arc(0, -player.size / 4, player.size / 4, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+
+                case 'secretShip':
+                    ctx.beginPath();
+                    ctx.moveTo(0, -player.size / 2);
+                    ctx.lineTo(player.size / 2, player.size / 2);
+                    ctx.lineTo(-player.size / 2, player.size / 2);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.fillStyle = `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.8)`;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, player.size / 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+
+                default:
+                    ctx.beginPath();
+                    ctx.moveTo(0, -player.size / 2);
+                    ctx.lineTo(player.size / 2, player.size / 2);
+                    ctx.lineTo(-player.size / 2, player.size / 2);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.fillStyle = `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.8)`;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, player.size / 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
             }
+
+            if (player.shipLevel >= 1 && player.shipType !== 'dragon') {
+                ctx.fillStyle = '#00FFFF';
+                ctx.fillRect(-player.size / 2 - 5, 0, 5, player.size / 2);
+                ctx.fillRect(player.size / 2, 0, 5, player.size / 2);
+            }
+            if (player.shipLevel >= 2 && player.shipType !== 'dragon') {
+                ctx.fillStyle = '#FF00FF';
+                ctx.beginPath();
+                ctx.moveTo(0, -player.size / 2 - 10);
+                ctx.lineTo(5, -player.size / 2);
+                ctx.lineTo(-5, -player.size / 2);
+                ctx.fill();
+            }
+            if (player.shield > 0) {
+                ctx.strokeStyle = '#00FF00';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(0, 0, player.size / 1.5, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            ctx.restore();
         }
 
         function drawPacmen() {
             pacmen.forEach(pacman => {
-                try {
-                    ctx.save();
-                    ctx.translate(pacman.x + pacman.size / 2, pacman.y + pacman.size / 2);
-                    ctx.fillStyle = theme.pacmanColor;
+                ctx.save();
+                ctx.translate(pacman.x + pacman.size / 2, pacman.y + pacman.size / 2);
+                ctx.rotate(pacman.spinAngle);
+                ctx.fillStyle = theme.pacmanColor;
+
+                if (pacman.isAI) {
+                    const shape = Math.floor(Math.random() * 3);
+                    if (shape === 0) { // Square AI
+                        ctx.fillRect(-pacman.size / 2, -pacman.size / 2, pacman.size, pacman.size);
+                        ctx.fillStyle = '#000000';
+                        ctx.beginPath();
+                        ctx.arc(0, -pacman.size / 4, pacman.size / 8, 0, Math.PI * 2);
+                        ctx.fill();
+                    } else if (shape === 1) { // Triangle AI
+                        ctx.beginPath();
+                        ctx.moveTo(0, -pacman.size / 2);
+                        ctx.lineTo(pacman.size / 2, pacman.size / 2);
+                        ctx.lineTo(-pacman.size / 2, pacman.size / 2);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.fillStyle = '#000000';
+                        ctx.beginPath();
+                        ctx.arc(0, -pacman.size / 4, pacman.size / 8, 0, Math.PI * 2);
+                        ctx.fill();
+                    } else { // Hexagon AI
+                        ctx.beginPath();
+                        for (let i = 0; i < 6; i++) {
+                            ctx.lineTo(
+                                pacman.size / 2 * Math.cos((2 * Math.PI * i) / 6),
+                                pacman.size / 2 * Math.sin((2 * Math.PI * i) / 6)
+                            );
+                        }
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.fillStyle = '#000000';
+                        ctx.beginPath();
+                        ctx.arc(0, -pacman.size / 4, pacman.size / 8, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                } else {
                     ctx.beginPath();
-                    ctx.arc(0, 0, pacman.size / 2, 0.2, Math.PI * 1.8);
+                    ctx.arc(0, 0, pacman.size / 2, pacman.mouthAngle, Math.PI * 2 - pacman.mouthAngle);
                     ctx.lineTo(0, 0);
                     ctx.fill();
-                    ctx.restore();
-                } catch (err) {
-                    console.error('Error drawing pacman:', err);
+                    ctx.fillStyle = '#000000';
+                    ctx.beginPath();
+                    ctx.arc(pacman.size / 5, -pacman.size / 4, pacman.size / 10, 0, Math.PI * 2);
+                    ctx.fill();
                 }
+
+                ctx.restore();
+                pacman.mouthAngle += pacman.mouthSpeed;
+                if (!pacman.isAI && (pacman.mouthAngle > 0.4 || pacman.mouthAngle < 0)) pacman.mouthSpeed = -pacman.mouthSpeed;
+                pacman.spinAngle += 0.02;
+            });
+        }
+
+        function drawGhosts() {
+            const ghostColors = ['#FF0000', '#FFB8FF', '#00FFFF', '#FFB852'];
+            ghosts.forEach(ghost => {
+                ctx.fillStyle = ghostColors[ghost.type];
+                ctx.beginPath();
+                ctx.arc(ghost.x + 10, ghost.y + 8, 10, Math.PI, 0, false);
+                ctx.lineTo(ghost.x + 20, ghost.y + 20);
+                ctx.lineTo(ghost.x + 16, ghost.y + 16);
+                ctx.lineTo(ghost.x + 12, ghost.y + 20);
+                ctx.lineTo(ghost.x + 8, ghost.y + 16);
+                ctx.lineTo(ghost.x + 4, ghost.y + 20);
+                ctx.lineTo(ghost.x, ghost.y + 8);
+                ctx.closePath();
+                ctx.fill();
+                ctx.fillStyle = '#FFFFFF';
+                ctx.beginPath();
+                ctx.arc(ghost.x + 6, ghost.y + 6, 3, 0, Math.PI * 2);
+                ctx.arc(ghost.x + 14, ghost.y + 6, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#000000';
+                ctx.beginPath();
+                ctx.arc(ghost.x + 6, ghost.y + 6, 1, 0, Math.PI * 2);
+                ctx.arc(ghost.x + 14, ghost.y + 6, 1, 0, Math.PI * 2);
+                ctx.fill();
             });
         }
 
         function drawBullets() {
             bullets.forEach(bullet => {
-                try {
-                    ctx.fillStyle = theme.bulletColor;
-                    ctx.fillRect(bullet.x - 2, bullet.y - 5, 4, 10);
-                } catch (err) {
-                    console.error('Error drawing bullet:', err);
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = theme.bulletColor;
+                ctx.fillStyle = theme.bulletColor;
+                if (player.shipType === 'pirate') {
+                    ctx.font = '20px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('L', bullet.x, bullet.y);
+                } else {
+                    ctx.font = '20px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(player.bulletLetter, bullet.x, bullet.y);
                 }
+                ctx.shadowBlur = 0;
+            });
+        }
+
+        function drawUpgrades() {
+            upgrades.forEach(upgrade => {
+                ctx.fillStyle = upgrade.color;
+                ctx.beginPath();
+                ctx.arc(upgrade.x + upgrade.size / 2, upgrade.y + upgrade.size / 2, upgrade.size / 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = '12px Arial';
+                ctx.fillText(upgrade.type[0].toUpperCase(), upgrade.x + upgrade.size / 2 - 3, upgrade.y + upgrade.size / 2 + 4);
+            });
+        }
+
+        function drawBosses() {
+            bosses.forEach(boss => {
+                ctx.save();
+                ctx.translate(boss.x + boss.size / 2, boss.y + boss.size / 2);
+                ctx.rotate(boss.angle);
+                ctx.fillStyle = '#FF4500';
+                ctx.beginPath();
+                ctx.arc(0, 0, boss.size / 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#000000';
+                ctx.beginPath();
+                ctx.arc(boss.size / 4, -boss.size / 4, boss.size / 8, 0, Math.PI * 2);
+                ctx.arc(-boss.size / 4, -boss.size / 4, boss.size / 8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+                boss.angle += boss.spinSpeed;
+            });
+        }
+
+        function drawExplosions() {
+            explosions.forEach((explosion, index) => {
+                ctx.fillStyle = `rgba(255, 165, 0, ${explosion.opacity * 0.5})`;
+                ctx.beginPath();
+                ctx.arc(explosion.x, explosion.y, explosion.size, 0, Math.PI * 2);
+                ctx.fill();
+                explosion.size += 0.5;
+                explosion.opacity -= 0.03;
+                if (explosion.opacity <= 0) explosions.splice(index, 1);
             });
         }
 
         // Game mechanics
         function shoot() {
             if (player.shootCooldown <= 0) {
-                bullets.push({ x: player.x, y: player.y - player.size / 2, speed: player.bulletSpeed });
+                if (player.bulletCount === 1) {
+                    bullets.push({ x: player.x, y: player.y - player.size / 2 - 5, speed: player.bulletSpeed });
+                } else if (player.bulletCount === 2) {
+                    bullets.push({ x: player.x - 10, y: player.y - player.size / 2 - 5, speed: player.bulletSpeed });
+                    bullets.push({ x: player.x + 10, y: player.y - player.size / 2 - 5, speed: player.bulletSpeed });
+                } else {
+                    bullets.push({ x: player.x - 15, y: player.y - player.size / 2 - 5, speed: player.bulletSpeed });
+                    bullets.push({ x: player.x, y: player.y - player.size / 2 - 5, speed: player.bulletSpeed });
+                    bullets.push({ x: player.x + 15, y: player.y - player.size / 2 - 5, speed: player.bulletSpeed });
+                }
                 player.shootCooldown = player.fireRate;
                 playSound('shoot');
             }
         }
 
+        function dropBomb() {
+            if (player.bombCooldown <= 0 && player.shipType === 'bomber') {
+                explosions.push({ x: player.x, y: player.y + player.size, size: 20, opacity: 1 });
+                pacmen.forEach((pacman, index) => {
+                    if (Math.abs(pacman.x - player.x) < 50 && Math.abs(pacman.y - (player.y + player.size)) < 50) {
+                        pacman.health = 0;
+                        pacmen.splice(index, 1);
+                        score += 50;
+                        player.coins += 10;
+                        achievements.pacmanSlayer.count++;
+                        if (achievements.pacmanSlayer.count >= achievementRequirements.pacmanSlayer && !achievements.pacmanSlayer.unlocked) {
+                            achievements.pacmanSlayer.unlocked = true;
+                            showMessage('Achievement Unlocked: Pac-Man Slayer!');
+                        }
+                        scoreDisplay.textContent = `Score: ${score}`;
+                        coinsDisplay.textContent = `Coins: ${player.coins}`;
+                        playSound('enemyHit');
+                    }
+                });
+                player.bombCooldown = 60;
+                playSound('bomb');
+            }
+        }
+
+        function activateRadar() {
+            if (player.shipType === 'scout' && !player.radarActive) {
+                player.radarActive = true;
+                setTimeout(() => player.radarActive = false, 5000);
+            }
+        }
+
         function update() {
             if (gameOver || isPaused) return;
-            try {
-                player.x += player.dx;
-                player.y += player.dy;
-                player.x = Math.max(player.size / 2, Math.min(canvas.width - player.size / 2, player.x));
-                player.y = Math.max(player.size / 2, Math.min(canvas.height - player.size / 2, player.y));
 
-                if (player.shootCooldown > 0) player.shootCooldown--;
-                if (isShooting) shoot();
+            player.x += player.dx;
+            player.y += player.dy;
+            player.x = Math.max(player.size / 2, Math.min(canvas.width - player.size / 2, player.x));
+            player.y = Math.max(player.size / 2, Math.min(canvas.height - player.size / 2, player.y));
 
-                bullets.forEach((bullet, bIndex) => {
-                    bullet.y -= bullet.speed;
-                    if (bullet.y < 0) bullets.splice(bIndex, 1);
-                    pacmen.forEach((pacman, pIndex) => {
-                        if (bullet.x > pacman.x && bullet.x < pacman.x + pacman.size &&
-                            bullet.y > pacman.y && bullet.y < pacman.y + pacman.size) {
-                            pacmen.splice(pIndex, 1);
-                            bullets.splice(bIndex, 1);
+            player.wheelAngle += 0.1;
+            player.propellerAngle += 0.2;
+            player.lightAngle += 0.05;
+            player.flameOffset = Math.sin(player.frameCount * 0.1) * 5;
+            player.flapAngle = Math.sin(player.frameCount * 0.1) * 0.2;
+            if (player.bombCooldown > 0) player.bombCooldown--;
+
+            if (player.shootCooldown > 0) player.shootCooldown--;
+            if (isShooting) {
+                shoot();
+                if (player.shipType === 'bomber' && Math.random() < 0.05) dropBomb();
+                if (player.shipType === 'scout' && Math.random() < 0.02) activateRadar();
+            }
+
+            spawnGhost();
+
+            bullets.forEach((bullet, bIndex) => {
+                bullet.y -= bullet.speed;
+                if (bullet.y < 0) bullets.splice(bIndex, 1);
+                pacmen.forEach((pacman, eIndex) => {
+                    const bulletWidth = 10;
+                    const bulletHeight = 20;
+                    if (bullet.x > pacman.x - bulletWidth && bullet.x < pacman.x + pacman.size + bulletWidth &&
+                        bullet.y > pacman.y - bulletHeight && bullet.y < pacman.y + pacman.size + bulletHeight) {
+                        pacman.health--;
+                        bullets.splice(bIndex, 1);
+                        if (pacman.health <= 0) {
+                            explosions.push({ x: pacman.x + pacman.size / 2, y: pacman.y + pacman.size / 2, size: 10, opacity: 1 });
+                            pacmen.splice(eIndex, 1);
                             score += 50;
                             player.coins += 10;
+                            achievements.pacmanSlayer.count++;
+                            achievements.coinCollector.count += 10;
+                            if (achievements.pacmanSlayer.count >= achievementRequirements.pacmanSlayer && !achievements.pacmanSlayer.unlocked) {
+                                achievements.pacmanSlayer.unlocked = true;
+                                showMessage('Achievement Unlocked: Pac-Man Slayer!');
+                            }
+                            if (achievements.coinCollector.count >= achievementRequirements.coinCollector && !achievements.coinCollector.unlocked) {
+                                achievements.coinCollector.unlocked = true;
+                                showMessage('Achievement Unlocked: Coin Collector!');
+                            }
                             scoreDisplay.textContent = `Score: ${score}`;
                             coinsDisplay.textContent = `Coins: ${player.coins}`;
+                            playSound('enemyHit');
+                            if (gameMode === 'endless') {
+                                pacmen.push({
+                                    x: Math.random() * (canvas.width - 40),
+                                    y: -40,
+                                    size: 40,
+                                    speed: 1 + level * 0.5,
+                                    mouthAngle: 0,
+                                    mouthSpeed: 0.05,
+                                    spinAngle: 0,
+                                    health: 1,
+                                    isAI: useAIEnemies && Math.random() < 0.5,
+                                    targetX: player.x,
+                                    targetY: player.y
+                                });
+                            }
                         }
-                    });
+                    }
                 });
+                bosses.forEach((boss, bIndex) => {
+                    if (bullet.x > boss.x && bullet.x < boss.x + boss.size &&
+                        bullet.y > boss.y && bullet.y < boss.y + boss.size) {
+                        boss.health--;
+                        bullets.splice(bIndex, 1);
+                        if (boss.health <= 0) {
+                            explosions.push({ x: boss.x + boss.size / 2, y: boss.y + boss.size / 2, size: 50, opacity: 1 });
+                            bosses.splice(bIndex, 1);
+                            score += 500;
+                            player.coins += 100;
+                            achievements.bossBuster.count++;
+                            if (achievements.bossBuster.count >= achievementRequirements.bossBuster && !achievements.bossBuster.unlocked) {
+                                achievements.bossBuster.unlocked = true;
+                                showMessage('Achievement Unlocked: Boss Buster!');
+                            }
+                            scoreDisplay.textContent = `Score: ${score}`;
+                            coinsDisplay.textContent = `Coins: ${player.coins}`;
+                            playSound('enemyHit');
+                        }
+                    }
+                });
+            });
 
-                pacmen.forEach((pacman, index) => {
+            pacmen.forEach(pacman => {
+                if (pacman.isAI) {
+                    const dx = pacman.targetX - pacman.x;
+                    const dy = pacman.targetY - pacman.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    if (distance > 5) {
+                        pacman.x += (dx / distance) * pacman.speed;
+                        pacman.y += (dy / distance) * pacman.speed;
+                    }
+                    pacman.targetX = player.x;
+                    pacman.targetY = player.y;
+                } else {
                     pacman.y += pacman.speed;
-                    if (pacman.y > canvas.height) pacmen.splice(index, 1);
-                    if (!isInvincible && Math.abs(pacman.x - player.x) < (pacman.size + player.size) / 2 &&
-                        Math.abs(pacman.y - player.y) < (pacman.size + player.size) / 2) {
+                }
+                if (pacman.y > canvas.height) {
+                    if (gameMode === 'endless') {
+                        pacman.y = -pacman.size;
+                        pacman.x = Math.random() * (canvas.width - pacman.size);
+                    } else {
+                        pacman.y = -pacman.size;
+                        pacman.x = Math.random() * (canvas.width - pacman.size);
+                    }
+                }
+                if (!isInvincible && Math.abs(pacman.x - player.x) < (pacman.size + player.size) / 2 &&
+                    Math.abs(pacman.y - player.y) < (pacman.size + player.size) / 2) {
+                    if (player.shield <= 0) {
                         player.lives--;
-                        pacmen.splice(index, 1);
                         if (player.lives <= 0) {
                             gameOver = true;
+                            playSound('death');
                             finalScore.textContent = `Score: ${score}`;
                             gameOverMenu.style.display = 'block';
                             gameOverMenu.style.opacity = '0';
                             setTimeout(() => gameOverMenu.style.opacity = '1', 10);
                         } else {
+                            pacman.y = -pacman.size;
                             showMessage(`Lives remaining: ${player.lives}`);
                         }
+                    } else {
+                        pacman.y = -pacman.size;
                     }
-                });
-
-                if (pacmen.length === 0) {
-                    level++;
-                    initLevel();
-                    levelDisplay.textContent = `Level: ${level}`;
                 }
-            } catch (err) {
-                console.error('Error in update:', err);
-                crashRecovery('Game crashed during update');
+            });
+
+            bosses.forEach(boss => {
+                boss.y += boss.speed;
+                if (boss.y > canvas.height) {
+                    boss.y = -boss.size;
+                    boss.x = Math.random() * (canvas.width - boss.size);
+                }
+                if (!isInvincible && Math.abs(boss.x + boss.size / 2 - player.x) < (boss.size + player.size) / 2 &&
+                    Math.abs(boss.y + boss.size / 2 - player.y) < (boss.size + player.size) / 2) {
+                    if (player.shield <= 0) {
+                        player.lives -= 2;
+                        if (player.lives <= 0) {
+                            gameOver = true;
+                            playSound('death');
+                            finalScore.textContent = `Score: ${score}`;
+                            gameOverMenu.style.display = 'block';
+                            gameOverMenu.style.opacity = '0';
+                            setTimeout(() => gameOverMenu.style.opacity = '1', 10);
+                        } else {
+                            boss.y = -boss.size;
+                            showMessage(`Lives remaining: ${player.lives}`);
+                        }
+                    } else {
+                        boss.y = -boss.size;
+                    }
+                }
+            });
+
+            if (player.shield > 0) player.shield--;
+
+            upgrades.forEach((upgrade, uIndex) => {
+                upgrade.y += upgrade.speed;
+                if (upgrade.y > canvas.height) {
+                    upgrades.splice(uIndex, 1);
+                } else if (Math.abs(upgrade.x + upgrade.size / 2 - player.x) < (upgrade.size + player.size) / 2 &&
+                           Math.abs(upgrade.y + upgrade.size / 2 - player.y) < (upgrade.size + player.size) / 2) {
+                    playSound('upgrade');
+                    switch (upgrade.type) {
+                        case 'gun':
+                            if (player.bulletCount < 3) player.bulletCount++;
+                            else if (player.fireRate > 5) player.fireRate -= 5;
+                            else player.bulletSpeed += 2;
+                            break;
+                        case 'ship':
+                            player.shipLevel = Math.min(player.shipLevel + 1, 2);
+                            break;
+                        case 'shield':
+                            player.shield = 100;
+                            break;
+                        case 'speed':
+                            player.speed += 2;
+                            setTimeout(() => player.speed -= 2, 10000);
+                            break;
+                        case 'multi':
+                            player.bulletCount = 5;
+                            setTimeout(() => player.bulletCount = 1, 10000);
+                            break;
+                    }
+                    upgrades.splice(uIndex, 1);
+                }
+            });
+
+            ghosts.forEach((ghost, index) => {
+                ghost.y += ghost.speed;
+                if (ghost.y > canvas.height) {
+                    ghosts.splice(index, 1);
+                } else if (Math.abs(ghost.x + 10 - player.x) < (player.size / 2 + 10) &&
+                           Math.abs(ghost.y + 10 - player.y) < (player.size / 2 + 10)) {
+                    score += 50;
+                    player.coins += 5;
+                    achievements.ghostHunter.count++;
+                    achievements.coinCollector.count += 5;
+                    if (achievements.ghostHunter.count >= achievementRequirements.ghostHunter && !achievements.ghostHunter.unlocked) {
+                        achievements.ghostHunter.unlocked = true;
+                        showMessage('Achievement Unlocked: Ghost Hunter!');
+                    }
+                    if (achievements.coinCollector.count >= achievementRequirements.coinCollector && !achievements.coinCollector.unlocked) {
+                        achievements.coinCollector.unlocked = true;
+                        showMessage('Achievement Unlocked: Coin Collector!');
+                    }
+                    scoreDisplay.textContent = `Score: ${score}`;
+                    coinsDisplay.textContent = `Coins: ${player.coins}`;
+                    playSound('waka');
+                    ghosts.splice(index, 1);
+                }
+            });
+
+            if (gameMode === 'classic' && pacmen.length === 0 && bosses.length === 0) {
+                level++;
+                player.coins += 50;
+                achievements.levelMaster.count++;
+                achievements.coinCollector.count += 50;
+                if (achievements.levelMaster.count >= achievementRequirements.levelMaster && !achievements.levelMaster.unlocked) {
+                    achievements.levelMaster.unlocked = true;
+                    showMessage('Achievement Unlocked: Level Master!');
+                }
+                if (achievements.coinCollector.count >= achievementRequirements.coinCollector && !achievements.coinCollector.unlocked) {
+                    achievements.coinCollector.unlocked = true;
+                    showMessage('Achievement Unlocked: Coin Collector!');
+                }
+                initLevel();
+                levelDisplay.textContent = `Level: ${level}`;
+                coinsDisplay.textContent = `Coins: ${player.coins}`;
+            } else if (gameMode === 'survival' && Math.random() < 0.05) {
+                pacmen.push({
+                    x: Math.random() * (canvas.width - 40),
+                    y: -40,
+                    size: 40,
+                    speed: 2 + level * 0.5,
+                    mouthAngle: 0,
+                    mouthSpeed: 0.05,
+                    spinAngle: 0,
+                    health: 1,
+                    isAI: useAIEnemies && Math.random() < 0.5,
+                    targetX: player.x,
+                    targetY: player.y
+                });
+            }
+
+            if (score > challengeScore && challengeScore > 0) {
+                showMessage('You beat your friend\'s score!');
+                challengeScore = 0;
             }
         }
 
         function gameLoop() {
-            if (gameOver || isPaused) return;
             try {
-                console.log('Game loop iteration');
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 drawBackground();
                 drawPlayer();
                 drawPacmen();
+                drawGhosts();
                 drawBullets();
+                drawUpgrades();
+                drawBosses();
+                drawExplosions();
                 update();
-                requestAnimationFrame(gameLoop);
+                player.frameCount++;
+                if (!gameOver && !isPaused) requestAnimationFrame(gameLoop);
             } catch (err) {
                 console.error('Game loop crashed:', err);
-                crashRecovery('Game crashed during loop');
+                gameOver = true;
             }
         }
 
@@ -1837,42 +2485,508 @@
             if (e.key === 'ArrowRight') player.dx = player.speed;
             if (e.key === 'ArrowUp') player.dy = -player.speed;
             if (e.key === 'ArrowDown') player.dy = player.speed;
-            if (e.key === ' ') isShooting = true;
+            if (e.key === ' ') {
+                if (!gameOver) isShooting = true;
+                else if (!isMobile && gameOverMenu.style.display === 'block') restartGame();
+            }
             if (e.key === 'Escape' && !gameOver) pauseGame();
+            if (e.key === 'b' && player.shipType === 'bomber') dropBomb();
+            if (e.key === 'r' && player.shipType === 'scout') activateRadar();
         });
 
         document.addEventListener('keyup', (e) => {
             if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') player.dx = 0;
             if (e.key === 'ArrowUp' || e.key === 'ArrowDown') player.dy = 0;
-            if (e.key === ' ') isShooting = false;
+            if (e.key === ' ' && !gameOver) isShooting = false;
         });
 
-        // Debug functions (simplified)
+        joystick.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.changedTouches[0];
+            moveTouchId = touch.identifier;
+            const rect = joystick.getBoundingClientRect();
+            const dx = (touch.clientX - rect.left - 50) / 50;
+            const dy = (touch.clientY - rect.top - 50) / 50;
+            player.dx = Math.max(-1, Math.min(1, dx)) * player.speed;
+            player.dy = Math.max(-1, Math.min(1, dy)) * player.speed;
+            joystickNub.style.left = `${50 + dx * 30}%`;
+            joystickNub.style.top = `${50 + dy * 30}%`;
+        }, { passive: false });
+
+        joystick.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            for (let touch of e.changedTouches) {
+                if (touch.identifier === moveTouchId) {
+                    const rect = joystick.getBoundingClientRect();
+                    const dx = Math.max(-1, Math.min(1, (touch.clientX - rect.left - 50) / 50));
+                    const dy = Math.max(-1, Math.min(1, (touch.clientY - rect.top - 50) / 50));
+                    player.dx = dx * player.speed;
+                    player.dy = dy * player.speed;
+                    joystickNub.style.left = `${50 + dx * 30}%`;
+                    joystickNub.style.top = `${50 + dy * 30}%`;
+                    break;
+                }
+            }
+        }, { passive: false });
+
+        joystick.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            for (let touch of e.changedTouches) {
+                if (touch.identifier === moveTouchId) {
+                    player.dx = 0;
+                    player.dy = 0;
+                    joystickNub.style.left = '50%';
+                    joystickNub.style.top = '50%';
+                    moveTouchId = null;
+                    break;
+                }
+            }
+        }, { passive: false });
+
+        shootBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            isShooting = true;
+            if (player.shipType === 'bomber') dropBomb();
+            if (player.shipType === 'scout') activateRadar();
+        }, { passive: false });
+
+        shootBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            isShooting = false;
+        }, { passive: false });
+
+        // Debug functions
         function debugAddScore(amount) { score += amount; scoreDisplay.textContent = `Score: ${score}`; }
         function debugNextLevel() { level++; initLevel(); levelDisplay.textContent = `Level: ${level}`; }
-        function debugResetGame() { init(); }
+        function debugSpawnUpgrade() {
+            upgrades.push({
+                x: player.x, y: player.y - 50, size: 20, speed: 2,
+                type: ['gun', 'ship', 'shield', 'speed', 'multi'][Math.floor(Math.random() * 5)],
+                color: ['#FF0000', '#0000FF', '#00FF00', '#FFFF00', '#FF00FF'][Math.floor(Math.random() * 5)]
+            });
+        }
+        function debugToggleInvincibility() { isInvincible = !isInvincible; showMessage(`Invincibility ${isInvincible ? 'ON' : 'OFF'}`); }
+        function debugResetGame() { init(); scoreDisplay.textContent = `Score: ${score}`; levelDisplay.textContent = `Level: ${level}`; coinsDisplay.textContent = `Coins: ${player.coins}`; }
+        function debugMaxBullets() { player.bulletCount = 5; showMessage('Max Bullets Activated!'); }
+        function debugMaxSpeed() { player.speed = 15; showMessage('Max Speed Activated!'); }
+        function debugInfiniteShield() { player.shield = Infinity; showMessage('Infinite Shield Activated!'); }
+        function debugKillAllPacmen() { pacmen = []; showMessage('All Pacmen Killed!'); }
+        function debugSpawnGhosts(count) { for (let i = 0; i < count; i++) spawnGhost(); showMessage(`${count} Ghosts Spawned!`); }
+        function debugIncreaseFireRate() { player.fireRate = Math.max(5, player.fireRate - 5); showMessage('Fire Rate Increased!'); }
+        function debugUnlockAllShips() { ownedShips = [...ownedShips, ...baseShips.filter(s => !ownedShips.includes(s))]; updateShipSelect(shipSelect); updateShipSelect(pauseShipSelect); showMessage('All Base Ships Unlocked!'); }
+        function debugDoubleSize() { player.size *= 2; showMessage('Player Size Doubled!'); }
+        function debugHalfSize() { player.size /= 2; showMessage('Player Size Halved!'); }
+        function debugInstantLevel10() { level = 10; initLevel(); levelDisplay.textContent = `Level: ${level}`; showMessage('Jumped to Level 10!'); }
+        function debugSlowEnemies() { pacmen.forEach(p => p.speed /= 2); showMessage('Enemies Slowed!'); }
+        function debugFastEnemies() { pacmen.forEach(p => p.speed *= 2); showMessage('Enemies Sped Up!'); }
+        function debugExtraLives(count) { player.lives += count; showMessage(`Added ${count} Lives! Lives: ${player.lives}`); }
+        function debugUnlockAchievements() { for (let a in achievements) achievements[a].unlocked = true; updateAchievementsList(); showMessage('All Achievements Unlocked!'); }
+        function debugAddCoins(amount) { player.coins += amount; coinsDisplay.textContent = `Coins: ${player.coins}`; showMessage(`Added ${amount} Coins!`); }
 
-        // PayPal integration (simplified)
+        // Additional features
+        function syncLeaderboard() {
+            console.log('Leaderboard sync not implemented in this version. Use Firebase for online sync.');
+        }
+
+        function shareScore() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'PacInvaders Score',
+                    text: `${playerNameInput.value.trim()} scored ${score} in PacInvaders!`,
+                    url: window.location.href
+                }).catch(() => showMessage('Sharing failed!'));
+            } else {
+                showMessage('Sharing only available on mobile browsers with Web Share API support!');
+            }
+        }
+
+        function copyScore() {
+            navigator.clipboard.writeText(`My PacInvaders Score: ${score}`).then(() => {
+                showMessage('Score copied to clipboard!');
+            }).catch(() => showMessage('Failed to copy score!'));
+        }
+
+        function challengeFriend() {
+            const friendScore = parseInt(document.getElementById('challenge-score-input')?.value);
+            if (!isNaN(friendScore) && friendScore > 0) {
+                challengeScore = friendScore;
+                showMessage(`Challenge set! Beat ${friendScore} to win!`);
+                document.getElementById('challenge-score-input').value = '';
+            } else {
+                showMessage('Please enter a valid score to challenge!');
+            }
+        }
+
+        // PayPal integration
         function initPayPalButtons() {
             if (typeof paypal === 'undefined') {
                 console.error('PayPal SDK not loaded');
+                showMessage('Payment system unavailable. Please try again later.');
                 return;
             }
+
             paypal.Buttons({
-                createOrder: (data, actions) => actions.order.create({
-                    purchase_units: [{ amount: { value: prices.premium.toFixed(2), currency_code: 'GBP' } }]
-                }),
-                onApprove: (data, actions) => actions.order.capture().then(details => {
-                    isPremium = true;
-                    localStorage.setItem('isPremium', 'true');
-                    showMessage(`Thanks, ${details.payer.name.given_name}! Premium unlocked.`);
-                }),
-                onError: (err) => console.error('PayPal error:', err)
+                createOrder: (data, actions) => {
+                    return actions.order.create({
+                        purchase_units: [{
+                            amount: { value: prices.premium.toFixed(2), currency_code: 'GBP' },
+                            description: 'Space Pac-Invaders Premium Upgrade'
+                        }]
+                    });
+                },
+                onApprove: (data, actions) => {
+                    return actions.order.capture().then(details => {
+                        isPremium = true;
+                        localStorage.setItem('isPremium', 'true');
+                        bgImageInput.disabled = false;
+                        bgMusicInput.disabled = false;
+                        document.getElementById('premium-options').style.display = 'block';
+                        player.fireRate = 15;
+                        player.lives = 3;
+                        updateShipSelect(shipSelect);
+                        updateShipSelect(pauseShipSelect);
+                        showMessage(`Thank you, ${details.payer.name.given_name}! Premium unlocked! Enjoy faster fire rate and extra lives.`);
+                    });
+                },
+                onError: (err) => {
+                    console.error('PayPal Premium Purchase Error:', err);
+                    showMessage('Payment failed! Please try again.');
+                }
             }).render('#paypal-premium-container');
+
+            paypal.Buttons({
+                createOrder: (data, actions) => {
+                    return actions.order.create({
+                        purchase_units: [{
+                            amount: { value: prices.ship.toFixed(2), currency_code: 'GBP' },
+                            description: 'Space Pac-Invaders Car Ship'
+                        }]
+                    });
+                },
+                onApprove: (data, actions) => {
+                    return actions.order.capture().then(details => {
+                        if (!ownedShips.includes('car')) {
+                            ownedShips.push('car');
+                            localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
+                            updateShipSelect(shipSelect);
+                            updateShipSelect(pauseShipSelect);
+                            showMessage(`Thank you, ${details.payer.name.given_name}! Car ship purchased!`);
+                        } else {
+                            showMessage('You already own the Car ship!');
+                        }
+                    });
+                },
+                onError: (err) => {
+                    console.error('PayPal Car Purchase Error:', err);
+                    showMessage('Payment failed! Please try again.');
+                }
+            }).render('#paypal-car-container');
+
+            paypal.Buttons({
+                createOrder: (data, actions) => {
+                    return actions.order.create({
+                        purchase_units: [{
+                            amount: { value: prices.ship.toFixed(2), currency_code: 'GBP' },
+                            description: 'Space Pac-Invaders Plane Ship'
+                        }]
+                    });
+                },
+                onApprove: (data, actions) => {
+                    return actions.order.capture().then(details => {
+                        if (!ownedShips.includes('plane')) {
+                            ownedShips.push('plane');
+                            localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
+                            updateShipSelect(shipSelect);
+                            updateShipSelect(pauseShipSelect);
+                            showMessage(`Thank you, ${details.payer.name.given_name}! Plane ship purchased!`);
+                        } else {
+                            showMessage('You already own the Plane ship!');
+                        }
+                    });
+                },
+                onError: (err) => {
+                    console.error('PayPal Plane Purchase Error:', err);
+                    showMessage('Payment failed! Please try again.');
+                }
+            }).render('#paypal-plane-container');
+
+            paypal.Buttons({
+                createOrder: (data, actions) => {
+                    return actions.order.create({
+                        purchase_units: [{
+                            amount: { value: prices.ship.toFixed(2), currency_code: 'GBP' },
+                            description: 'Space Pac-Invaders UFO Ship'
+                        }]
+                    });
+                },
+                onApprove: (data, actions) => {
+                    return actions.order.capture().then(details => {
+                        if (!ownedShips.includes('ufo')) {
+                            ownedShips.push('ufo');
+                            localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
+                            updateShipSelect(shipSelect);
+                            updateShipSelect(pauseShipSelect);
+                            showMessage(`Thank you, ${details.payer.name.given_name}! UFO ship purchased!`);
+                        } else {
+                            showMessage('You already own the UFO ship!');
+                        }
+                    });
+                },
+                onError: (err) => {
+                    console.error('PayPal UFO Purchase Error:', err);
+                    showMessage('Payment failed! Please try again.');
+                }
+            }).render('#paypal-ufo-container');
+
+            paypal.Buttons({
+                createOrder: (data, actions) => {
+                    return actions.order.create({
+                        purchase_units: [{
+                            amount: { value: prices.ship.toFixed(2), currency_code: 'GBP' },
+                            description: 'Space Pac-Invaders Spaceship'
+                        }]
+                    });
+                },
+                onApprove: (data, actions) => {
+                    return actions.order.capture().then(details => {
+                        if (!ownedShips.includes('spaceship')) {
+                            ownedShips.push('spaceship');
+                            localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
+                            updateShipSelect(shipSelect);
+                            updateShipSelect(pauseShipSelect);
+                            showMessage(`Thank you, ${details.payer.name.given_name}! Spaceship purchased!`);
+                        } else {
+                            showMessage('You already own the Spaceship!');
+                        }
+                    });
+                },
+                onError: (err) => {
+                    console.error('PayPal Spaceship Purchase Error:', err);
+                    showMessage('Payment failed! Please try again.');
+                }
+            }).render('#paypal-spaceship-container');
+
+            paypal.Buttons({
+                createOrder: (data, actions) => {
+                    return actions.order.create({
+                        purchase_units: [{
+                            amount: { value: prices.ship.toFixed(2), currency_code: 'GBP' },
+                            description: 'Space Pac-Invaders Tank Ship'
+                        }]
+                    });
+                },
+                onApprove: (data, actions) => {
+                    return actions.order.capture().then(details => {
+                        if (!ownedShips.includes('tank')) {
+                            ownedShips.push('tank');
+                            localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
+                            updateShipSelect(shipSelect);
+                            updateShipSelect(pauseShipSelect);
+                            showMessage(`Thank you, ${details.payer.name.given_name}! Tank ship purchased!`);
+                        } else {
+                            showMessage('You already own the Tank ship!');
+                        }
+                    });
+                },
+                onError: (err) => {
+                    console.error('PayPal Tank Purchase Error:', err);
+                    showMessage('Payment failed! Please try again.');
+                }
+            }).render('#paypal-tank-container');
+
+            paypal.Buttons({
+                createOrder: (data, actions) => {
+                    return actions.order.create({
+                        purchase_units: [{
+                            amount: { value: prices.ship.toFixed(2), currency_code: 'GBP' },
+                            description: 'Space Pac-Invaders Dragon Ship'
+                        }]
+                    });
+                },
+                onApprove: (data, actions) => {
+                    return actions.order.capture().then(details => {
+                        if (!ownedShips.includes('dragon')) {
+                            ownedShips.push('dragon');
+                            localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
+                            updateShipSelect(shipSelect);
+                            updateShipSelect(pauseShipSelect);
+                            showMessage(`Thank you, ${details.payer.name.given_name}! Dragon ship purchased!`);
+                        } else {
+                            showMessage('You already own the Dragon ship!');
+                        }
+                    });
+                },
+                onError: (err) => {
+                    console.error('PayPal Dragon Purchase Error:', err);
+                    showMessage('Payment failed! Please try again.');
+                }
+            }).render('#paypal-dragon-container');
+
+            paypal.Buttons({
+                createOrder: (data, actions) => {
+                    return actions.order.create({
+                        purchase_units: [{
+                            amount: { value: prices.ship.toFixed(2), currency_code: 'GBP' },
+                            description: 'Space Pac-Invaders Cruiser Ship'
+                        }]
+                    });
+                },
+                onApprove: (data, actions) => {
+                    return actions.order.capture().then(details => {
+                        if (!ownedShips.includes('cruiser')) {
+                            ownedShips.push('cruiser');
+                            localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
+                            updateShipSelect(shipSelect);
+                            updateShipSelect(pauseShipSelect);
+                            showMessage(`Thank you, ${details.payer.name.given_name}! Cruiser ship purchased!`);
+                        } else {
+                            showMessage('You already own the Cruiser ship!');
+                        }
+                    });
+                },
+                onError: (err) => {
+                    console.error('PayPal Cruiser Purchase Error:', err);
+                    showMessage('Payment failed! Please try again.');
+                }
+            }).render('#paypal-cruiser-container');
+
+            paypal.Buttons({
+                createOrder: (data, actions) => {
+                    return actions.order.create({
+                        purchase_units: [{
+                            amount: { value: prices.ship.toFixed(2), currency_code: 'GBP' },
+                            description: 'Space Pac-Invaders Bomber Ship'
+                        }]
+                    });
+                },
+                onApprove: (data, actions) => {
+                    return actions.order.capture().then(details => {
+                        if (!ownedShips.includes('bomber')) {
+                            ownedShips.push('bomber');
+                            localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
+                            updateShipSelect(shipSelect);
+                            updateShipSelect(pauseShipSelect);
+                            showMessage(`Thank you, ${details.payer.name.given_name}! Bomber ship purchased!`);
+                        } else {
+                            showMessage('You already own the Bomber ship!');
+                        }
+                    });
+                },
+                onError: (err) => {
+                    console.error('PayPal Bomber Purchase Error:', err);
+                    showMessage('Payment failed! Please try again.');
+                }
+            }).render('#paypal-bomber-container');
+
+            paypal.Buttons({
+                createOrder: (data, actions) => {
+                    return actions.order.create({
+                        purchase_units: [{
+                            amount: { value: prices.ship.toFixed(2), currency_code: 'GBP' },
+                            description: 'Space Pac-Invaders Pirate Ship'
+                        }]
+                    });
+                },
+                onApprove: (data, actions) => {
+                    return actions.order.capture().then(details => {
+                        if (!ownedShips.includes('pirate')) {
+                            ownedShips.push('pirate');
+                            localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
+                            updateShipSelect(shipSelect);
+                            updateShipSelect(pauseShipSelect);
+                            showMessage(`Thank you, ${details.payer.name.given_name}! Pirate ship purchased!`);
+                        } else {
+                            showMessage('You already own the Pirate ship!');
+                        }
+                    });
+                },
+                onError: (err) => {
+                    console.error('PayPal Pirate Purchase Error:', err);
+                    showMessage('Payment failed! Please try again.');
+                }
+            }).render('#paypal-pirate-container');
+
+            paypal.Buttons({
+                createOrder: (data, actions) => {
+                    return actions.order.create({
+                        purchase_units: [{
+                            amount: { value: prices.random.toFixed(2), currency_code: 'GBP' },
+                            description: 'Space Pac-Invaders Random AI Ship'
+                        }]
+                    });
+                },
+                onApprove: (data, actions) => {
+                    return actions.order.capture().then(details => {
+                        const newShip = generateUniqueShipName();
+                        ownedShips.push(newShip);
+                        localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
+                        updateShipSelect(shipSelect);
+                        updateShipSelect(pauseShipSelect);
+                        showMessage(`Thank you, ${details.payer.name.given_name}! You got a unique AI ship: ${newShip}!`);
+                    });
+                },
+                onError: (err) => {
+                    console.error('PayPal Random Ship Purchase Error:', err);
+                    showMessage('Payment failed! Please try again.');
+                }
+            }).render('#paypal-random-container');
+
+            paypal.Buttons({
+                createOrder: (data, actions) => {
+                    return actions.order.create({
+                        purchase_units: [{
+                            amount: { value: prices.speedboost.toFixed(2), currency_code: 'GBP' },
+                            description: 'Space Pac-Invaders Speed Boost'
+                        }]
+                    });
+                },
+                onApprove: (data, actions) => {
+                    return actions.order.capture().then(details => {
+                        if (!player.speedBoost) {
+                            player.speedBoost = true;
+                            localStorage.setItem('speedBoost', 'true');
+                            player.speed = 10;
+                            showMessage(`Thank you, ${details.payer.name.given_name}! Speed Boost purchased! Your speed is now doubled.`);
+                        } else {
+                            showMessage('You already have the Speed Boost!');
+                        }
+                    });
+                },
+                onError: (err) => {
+                    console.error('PayPal Speed Boost Purchase Error:', err);
+                    showMessage('Payment failed! Please try again.');
+                }
+            }).render('#paypal-speedboost-container');
+
+            paypal.Buttons({
+                createOrder: (data, actions) => {
+                    return actions.order.create({
+                        purchase_units: [{
+                            amount: { value: prices.shieldpack.toFixed(2), currency_code: 'GBP' },
+                            description: 'Space Pac-Invaders Shield Pack'
+                        }]
+                    });
+                },
+                onApprove: (data, actions) => {
+                    return actions.order.capture().then(details => {
+                        if (!player.shieldPack) {
+                            player.shieldPack = true;
+                            localStorage.setItem('shieldPack', 'true');
+                            player.shield = 200;
+                            showMessage(`Thank you, ${details.payer.name.given_name}! Shield Pack purchased! Your shield is now doubled.`);
+                        } else {
+                            showMessage('You already have the Shield Pack!');
+                        }
+                    });
+                },
+                onError: (err) => {
+                    console.error('PayPal Shield Pack Purchase Error:', err);
+                    showMessage('Payment failed! Please try again.');
+                }
+            }).render('#paypal-shieldpack-container');
         }
 
         // Initialize game
-        console.log('Initializing game on page load');
         loadSettings();
         initPayPalButtons();
     </script>
