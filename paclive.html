@@ -474,22 +474,37 @@
       const savedCustomTheme = JSON.parse(localStorage.getItem('customTheme'));
       const savedSounds = JSON.parse(localStorage.getItem('customSounds')) || {};
 
+      // Load background image
       if (savedImage) {
         customBgImage = new Image();
         customBgImage.src = savedImage;
-        customBgImage.onload = () => {
-          document.body.style.backgroundImage = `url(${customBgImage.src})`;
-          document.body.style.backgroundSize = 'cover';
-        };
+      } else {
+        customBgImage = new Image();
+        customBgImage.src = 'https://raw.githubusercontent.com/philosipher/pacinvaders/main/assets/images/wp5899595-hacker-anime-wallpapers.jpg';
       }
+      customBgImage.onload = () => {
+        document.body.style.backgroundImage = `url(${customBgImage.src})`;
+        document.body.style.backgroundSize = 'cover';
+      };
+      customBgImage.onerror = () => {
+        console.error('Error loading default background image');
+        showMessage('Background image failed to load. Check your connection.');
+      };
+
+      // Load background music
       if (savedMusic) {
         backgroundMusic = new Audio(savedMusic);
       } else {
-        backgroundMusic = new Audio('default_music.mp3');
+        backgroundMusic = new Audio('https://raw.githubusercontent.com/philosipher/pacinvaders/main/assets/sounds/2016-08-16_-_Tensions_-_David_Fesliyan.mp3');
       }
       backgroundMusic.loop = true;
       backgroundMusic.volume = musicVolumeLevel;
-      if (!isMuted) backgroundMusic.play().catch(() => {});
+      if (!isMuted) {
+        backgroundMusic.play().catch(err => {
+          console.error('Error playing default background music:', err);
+          showMessage('Background music failed to load. Check your connection.');
+        });
+      }
 
       if (savedTheme) {
         themeSelect.value = savedTheme;
@@ -1456,8 +1471,7 @@
             bullets.push({ x: player.x + 10, y: player.y - player.size / 2 - 5, speed: player.bulletSpeed });
           } else if (player.bulletCount === 3) {
             bullets.push({ x: player.x - 15, y: player.y - player.size / 2 - 5, speed: player.bulletSpeed });
-            bullets.push({ x: player.x, y: player.y - player.size / 2 - 5, speed: player.bulletSpeed });
-            bullets.push({ x: player.x + 15, y: player.y - player.size / 2 - 5, speed: player.bulletSpeed });
+                        bullets.push({ x: player.x + 15, y: player.y - player.size / 2 - 5, speed: player.bulletSpeed });
           }
         }
         player.shootCooldown = player.fireRate;
@@ -1486,7 +1500,7 @@
 
       bullets.forEach((bullet, bIndex) => {
         bullet.y -= bullet.speed;
-        if (bullet.y < 0) bullets.splice(bIndex, 1        );
+        if (bullet.y < 0) bullets.splice(bIndex, 1);
         pacmen.forEach((pacman, eIndex) => {
           const bulletWidth = player.shipType === 'pirate' ? 10 : 5;
           const bulletHeight = player.shipType === 'pirate' ? 20 : 5;
