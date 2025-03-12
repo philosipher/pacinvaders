@@ -555,903 +555,228 @@
         const joystickNub = document.getElementById('joystick-nub');
         const shootBtn = document.getElementById('shoot-btn');
         const soundBtn = document.getElementById('sound-btn');
-        const debugToggleBtn = document.getElementById('debug-toggle-btn');
-        const pauseResumeBtn = document.getElementById('pause-resume-btn');
         const menu = document.getElementById('menu');
         const settingsMenu = document.getElementById('settings-menu');
         const gameOverMenu = document.getElementById('game-over-menu');
         const pauseMenu = document.getElementById('pause-menu');
+        const controlBar = document.getElementById('control-bar');
+        const finalScore = document.getElementById('final-score');
+        const messageDisplay = document.getElementById('messageDisplay');
+        const debugToggleBtn = document.getElementById('debug-toggle-btn');
+        const debugMenu = document.getElementById('debug-menu');
         const achievementsMenu = document.getElementById('achievements-menu');
         const shopMenu = document.getElementById('shop-menu');
-        const debugMenu = document.getElementById('debug-menu');
         const tutorialMenu = document.getElementById('tutorial-menu');
-        const finalScore = document.getElementById('final-score');
-        const leaderboardMain = document.getElementById('leaderboard-main');
-        const leaderboardGO = document.getElementById('leaderboard-go');
-        const themeSelect = document.getElementById('theme-select');
-        const shipSelect = document.getElementById('ship-select');
-        const pauseShipSelect = document.getElementById('pause-ship-select');
-        const bulletLetterInput = document.getElementById('bullet-letter-input');
-        const pauseBulletLetterInput = document.getElementById('pause-bullet-letter-input');
-        const gameModeSelect = document.getElementById('game-mode-select');
-        const bgImageInput = document.getElementById('bg-image-input');
-        const bgMusicInput = document.getElementById('bg-music-input');
-        const gameVolume = document.getElementById('game-volume');
-        const musicVolume = document.getElementById('music-volume');
-        const musicSelect = document.getElementById('music-select');
-        const playerNameInput = document.getElementById('player-name');
-        const customThemeDiv = document.getElementById('custom-theme');
-        const codeInput = document.getElementById('code-input');
-        const aiEnemiesCheckbox = document.getElementById('ai-enemies');
-        const fontSelect = document.getElementById('font-select');
-        const shipColorPicker = document.getElementById('ship-color');
 
-        // Canvas setup
-        canvas.width = Math.min(800, window.innerWidth - 20);
-        canvas.height = Math.min(600, window.innerHeight - 20);
-
-        // Player object
-        const player = {
+        // Game Variables
+        let player = {
             x: canvas.width / 2,
-            y: canvas.height - 60,
-            size: 40,
+            y: canvas.height - 50,
+            size: 30,
             speed: 5,
             dx: 0,
             dy: 0,
+            lives: 3,
             shootCooldown: 0,
-            bulletSpeed: 10,
             fireRate: 20,
+            bulletSpeed: 10,
             bulletCount: 1,
-            shipLevel: 0,
             shipType: 'default',
-            bulletLetter: 'B',
-            frameCount: 0,
+            shipLevel: 0,
+            shield: 0,
             wheelAngle: 0,
             propellerAngle: 0,
             lightAngle: 0,
             flameOffset: 0,
             flapAngle: 0,
-            shield: 0,
-            lives: 1,
-            speedBoost: false,
-            shieldPack: false,
-            coins: 0,
-            shipColor: '#FFFF00',
             bombCooldown: 0,
-            radarActive: false
+            coins: 0,
+            frameCount: 0
         };
-
-        // Game state
         let bullets = [];
         let pacmen = [];
-        let ghosts = [];
-        let backgroundStars = [];
+        let bosses = [];
         let upgrades = [];
         let explosions = [];
-        let bosses = [];
+        let ghosts = [];
         let score = 0;
         let level = 1;
-        let coins = 0;
         let gameOver = false;
-        let isPaused = false;
-        let moveTouchId = null;
         let isShooting = false;
-        let ghostSpawnTimer = 0;
-        let audioCtx = null;
+        let isPaused = false;
         let isMuted = false;
-        let backgroundMusic = null;
-        let customBgImage = null;
-        let gameVolumeLevel = 0.5;
-        let musicVolumeLevel = 0.5;
-        let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
-        let customSounds = { waka: null, death: null, shoot: null, enemyHit: null, upgrade: null, bomb: null };
-        let isPremium = localStorage.getItem('isPremium') === 'true';
-        let ownedShips = JSON.parse(localStorage.getItem('ownedShips')) || ['default', 'scout', 'ranger', 'blaster'];
-        let achievements = JSON.parse(localStorage.getItem('achievements')) || {
-            pacmanSlayer: { count: 0, unlocked: false, name: 'Pac-Man Slayer', desc: 'Destroy 50 Pac-Men' },
-            ghostHunter: { count: 0, unlocked: false, name: 'Ghost Hunter', desc: 'Collect 20 Ghosts' },
-            levelMaster: { count: 0, unlocked: false, name: 'Level Master', desc: 'Reach Level 10' },
-            coinCollector: { count: 0, unlocked: false, name: 'Coin Collector', desc: 'Earn 1000 Coins' },
-            bossBuster: { count: 0, unlocked: false, name: 'Boss Buster', desc: 'Defeat 5 Bosses' }
-        };
-        let isDebugMode = false;
+        let backgroundImage = null;
+        let backgroundMusic = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3');
+        let gameVolume = 0.5;
+        let musicVolume = 0.5;
         let isInvincible = false;
         let useAIEnemies = false;
         let gameMode = 'classic';
         let challengeScore = 0;
+        let customBulletLetter = '•';
+        backgroundMusic.loop = true;
 
-        // Pricing
-        const defaultPrices = {
-            premium: 15.00,
+        // Sound Effects
+        const sounds = {
+            waka: new Audio('https://s3.amazonaws.com/freecodecamp/pacman-waka.mp3'),
+            death: new Audio('https://s3.amazonaws.com/freecodecamp/pacman-death.mp3'),
+            shoot: new Audio('https://www.soundjay.com/buttons/sounds/button-1.mp3'),
+            enemyHit: new Audio('https://www.soundjay.com/buttons/sounds/button-2.mp3'),
+            upgrade: new Audio('https://www.soundjay.com/buttons/sounds/button-3.mp3')
+        };
+
+        // Achievements
+        const achievements = {
+            pacmanSlayer: { name: 'Pac-Man Slayer', desc: 'Defeat 50 Pac-Men', count: 0, unlocked: false },
+            bossBuster: { name: 'Boss Buster', desc: 'Defeat 5 Bosses', count: 0, unlocked: false },
+            levelMaster: { name: 'Level Master', desc: 'Reach Level 10', count: 0, unlocked: false },
+            coinCollector: { name: 'Coin Collector', desc: 'Collect 500 Coins', count: 0, unlocked: false },
+            ghostHunter: { name: 'Ghost Hunter', desc: 'Collect 25 Ghosts', count: 0, unlocked: false }
+        };
+        const achievementRequirements = {
+            pacmanSlayer: 50,
+            bossBuster: 5,
+            levelMaster: 10,
+            coinCollector: 500,
+            ghostHunter: 25
+        };
+
+        // Ship Types
+        const shipTypes = [
+            { name: 'default', value: 'default', desc: 'Default Ship' },
+            { name: 'car', value: 'car', desc: 'Car - Wheels spin' },
+            { name: 'plane', value: 'plane', desc: 'Plane - Propeller spins' },
+            { name: 'ufo', value: 'ufo', desc: 'UFO - Lights pulse' },
+            { name: 'spaceship', value: 'spaceship', desc: 'Spaceship - Flame flickers' },
+            { name: 'tank', value: 'tank', desc: 'Tank - Turret sways' },
+            { name: 'dragon', value: 'dragon', desc: 'Dragon - Wings flap' },
+            { name: 'cruiser', value: 'cruiser', desc: 'Cruiser - Tough armor' },
+            { name: 'bomber', value: 'bomber', desc: 'Bomber - Drops bombs' },
+            { name: 'pirate', value: 'pirate', desc: 'Pirate - Treasure glow' },
+            { name: 'scout', value: 'scout', desc: 'Scout - Radar pulse' }
+        ];
+
+        // Prices
+        let prices = {
+            premium: 5.00,
             ship: 1.00,
             random: 0.50,
             speedboost: 2.00,
             shieldpack: 3.00
         };
-        let prices = JSON.parse(localStorage.getItem('prices')) || { ...defaultPrices };
 
-        // Themes
-        const themes = {
-            default: { playerColor: '#FFFF00', pacmanColor: '#FFFF00', ghostColor: '#FF0000', bulletColor: '#FF00FF', bgColor: '#000033', borderColor: '#00FFFF', buttonColor: '#00FFFF', menuColor: '#000000', textColor: '#FFFF00' },
-            retro: { playerColor: '#00FF00', pacmanColor: '#FFFF00', ghostColor: '#FF00FF', bulletColor: '#00FFFF', bgColor: '#000000', borderColor: '#00FF00', buttonColor: '#00FF00', menuColor: '#000000', textColor: '#FFFF00' },
-            neon: { playerColor: '#FF00FF', pacmanColor: '#00FFFF', ghostColor: '#FF0000', bulletColor: '#FFFF00', bgColor: '#000022', borderColor: '#FF00FF', buttonColor: '#FF00FF', menuColor: '#000022', textColor: '#00FFFF' },
-            solar: { playerColor: '#FF4500', pacmanColor: '#FFD700', ghostColor: '#FF8C00', bulletColor: '#FF00FF', bgColor: '#1A0000', borderColor: '#FFA500', buttonColor: '#FFA500', menuColor: '#1A0000', textColor: '#FFD700' },
-            cosmic: { playerColor: '#00CED1', pacmanColor: '#FFFFFF', ghostColor: '#9400D3', bulletColor: '#00FFFF', bgColor: '#000011', borderColor: '#00CED1', buttonColor: '#00CED1', menuColor: '#000011', textColor: '#FFFFFF' },
-            galaxy: { playerColor: '#8A2BE2', pacmanColor: '#DDA0DD', ghostColor: '#FF1493', bulletColor: '#FF00FF', bgColor: '#0A001A', borderColor: '#8A2BE2', buttonColor: '#8A2BE2', menuColor: '#0A001A', textColor: '#DDA0DD' },
-            cyber: { playerColor: '#00FF7F', pacmanColor: '#7FFF00', ghostColor: '#FF00FF', bulletColor: '#FFFF00', bgColor: '#001100', borderColor: '#00FF7F', buttonColor: '#00FF7F', menuColor: '#001100', textColor: '#7FFF00' },
-            dark: { playerColor: '#696969', pacmanColor: '#A9A9A9', ghostColor: '#FF4500', bulletColor: '#00FFFF', bgColor: '#1C2526', borderColor: '#696969', buttonColor: '#696969', menuColor: '#1C2526', textColor: '#A9A9A9' },
-            steampunk: { playerColor: '#8B4513', pacmanColor: '#DAA520', ghostColor: '#CD5C5C', bulletColor: '#FFD700', bgColor: '#2F1F0F', borderColor: '#8B4513', buttonColor: '#DAA520', menuColor: '#2F1F0F', textColor: '#FFD700' },
-            cyberpunk: { playerColor: '#00FFFF', pacmanColor: '#FF00FF', ghostColor: '#9400D3', bulletColor: '#FFFF00', bgColor: '#0D1A26', borderColor: '#00FFFF', buttonColor: '#FF00FF', menuColor: '#0D1A26', textColor: '#FFFF00' },
-            arcade: { playerColor: '#FF0000', pacmanColor: '#FFFF00', ghostColor: '#00FF00', bulletColor: '#0000FF', bgColor: '#000000', borderColor: '#FF0000', buttonColor: '#00FF00', menuColor: '#000000', textColor: '#FFFFFF' },
-            futuristic: { playerColor: '#00CCFF', pacmanColor: '#FFFFFF', ghostColor: '#FF00CC', bulletColor: '#66FF66', bgColor: '#001933', borderColor: '#00CCFF', buttonColor: '#66FF66', menuColor: '#001933', textColor: '#FFFFFF' }
-        };
+        // Initialize Ship Selection
+        const shipSelect = document.getElementById('ship-select');
+        const pauseShipSelect = document.getElementById('pause-ship-select');
+        shipTypes.forEach(ship => {
+            const option = document.createElement('option');
+            option.value = ship.value;
+            option.textContent = ship.desc;
+            shipSelect.appendChild(option);
+            const pauseOption = option.cloneNode(true);
+            pauseShipSelect.appendChild(pauseOption);
+        });
 
-        let theme = themes.default;
-        const baseShips = ['default', 'car', 'plane', 'ufo', 'spaceship', 'tank', 'dragon', 'cruiser', 'bomber', 'pirate', 'scout', 'ranger', 'blaster'];
-        const shipIcons = {
-            default: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTAgMTVMNDAgMjVMMjUgMzBMMTEgMTlaIiBmaWxsPSIjRkZGRkZGIi8+PGNpcmNsZSBjeD0iMjUiIGN5PSIxOCIgcj0iNSIgZmlsbD0iI0ZGRkZGRiIvPjxyZWN0IHg9IjIwIiB5PSIyOCIgd2lkdGg9IjEwIiBoZWlnaHQ9IjMiIGZpbGw9IiNGRjQ1MDAiLz48L3N2Zz4=',
-            car: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTAgMTBIMzBWMzBIMTBWMTBaIiBmaWxsPSIjRkZGRkZGIi8+PHBhdGggZD0iTTIwIDMwVjQwTTYwIDQwSDQwVjMwSDQwWiIgZmlsbD0iIzAwMDAwMCIvPjwvc3ZnPg==',
-            plane: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTAgMjVMNDAgMzVMMjUgNDBMMTAgMjVaIiBmaWxsPSIjQUFBQUFBIi8+PHBhdGggZD0iTTI1IDE1TDE1IDI1TDM1IDI1TDI1IDE1WiIgZmlsbD0iIzAwMDAwMCIvPjwvc3ZnPg==',
-            ufo: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZWxsaXBzZSBjeD0iMjUiIGN5PSIyNSIgcng9IjIwIiByeT0iMTAiIGZpbGw9IiNGRkZGRkYiLz48ZWxsaXBzZSBjeD0iMjUiIGN5PSIxNSIgcng9IjE1IiByeT0iOCIgZmlsbD0iI0FBQUFBQSIvPjwvc3ZnPg==',
-            spaceship: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTAgMjVMNDAgMzVMMjUgNDBMMTAgMjVaIiBmaWxsPSIjRkZGRkZGIi8+PHBhdGggZD0iTTIwIDQwVjQ1SDMwVjQwSDIwWiIgZmlsbD0iI0ZGNDUwMCIvPjwvc3ZnPg==',
-            tank: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB4PSIxMCIgeT0iMTUiIHdpZHRoPSI0MCIgaGVpZ2h0PSIxNSIgZmlsbD0iIzY2NjYzMyIvPjxwYXRoIGQ9Ik0yMCAxME0zMCAzNSIgZmlsbD0iIzMzMzMzMyIvPjwvc3ZnPg==',
-            dragon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTAgMjVMNDAgMzVMMjUgNDBMMTAgMjVaIiBmaWxsPSIjRkZGRkZGIi8+PHBhdGggZD0iTTIwIDEwTDMwIDIwTDE1IDI1TDIwIDEwWiIgZmlsbD0iI0ZGNDUwMCIvPjwvc3ZnPg==',
-            cruiser: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB4PSIxMCIgeT0iMTAiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgZmlsbD0iI0FBQUFBQSIvPjxjaXJjbGUgY3g9IjI1IiBjeT0iMTUiIHI9IjEwIiBmaWxsPSIjRkYwMDAwIi8+PC9zdmc+',
-            bomber: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTAgMjVMNDAgMzVMMjUgNDBMMTAgMjVaIiBmaWxsPSIjNjY2NjY2Ii8+PHJlY3QgeD0iMjAiIHk9IjMwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIGZpbGw9IiMwMDAwMDAiLz48L3N2Zz4=',
-            pirate: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTAgNDAiIGZpbGw9IiM4QjQ1MTMiLz48cGF0aCBkPSJNMTAgMzBMMzAgNDBMMjAgMjVMMTAgMzBaIiBmaWxsPSIjRkZGRkZGIi8+PC9zdmc+',
-            scout: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTAgMjVMNDAgMzVMMjUgNDBMMTAgMjVaIiBmaWxsPSIjMDBGRjAwIi8+PC9zdmc+',
-            ranger: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTUgMjVMMzUgMzVMMjUgNDBMMTUgMjVaIiBmaWxsPSIjRkYwMEZGIi8+PHJlY3QgeD0iMjAiIHk9IjM1IiB3aWR0aD0iMTAiIGhlaWdodD0iNSIgZmlsbD0iI0ZGMDBGRiIvPjwvc3ZnPg==',
-            blaster: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIyNSIgY3k9IjI1IiByPSIyMCIgZmlsbD0iI0ZGRkZGRiIvPjxjaXJjbGUgY3g9IjI1IiBjeT0iMTUiIHI9IjEwIiBmaWxsPSIjMDAwMDAwIi8+PC9zdmc+'
-        };
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        const achievementRequirements = {
-            pacmanSlayer: 50,
-            ghostHunter: 20,
-            levelMaster: 10,
-            coinCollector: 1000,
-            bossBuster: 5
-        };
-
-        // Audio initialization
-        function initAudioContext() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-        }
-        document.addEventListener('touchstart', initAudioContext, { once: true });
-        document.addEventListener('click', initAudioContext, { once: true });
-
-        // Utility functions
-        function showMessage(message) {
-            const messageDiv = document.getElementById('messageDisplay');
-            messageDiv.textContent = message;
-            messageDiv.style.display = 'block';
-            setTimeout(() => messageDiv.style.display = 'none', 3000);
-        }
-
-        function generateUniqueShipName() {
-            const prefixes = ['Aero', 'Cosmo', 'Galactic', 'Nebula', 'Stellar', 'Quantum', 'Orbit', 'Nova', 'Astro', 'Lunar'];
-            const suffixes = ['Blaster', 'Cruiser', 'Fighter', 'Voyager', 'Phantom', 'Raptor', 'Drift', 'Pulse', 'Scout', 'Xeno'];
-            const randomNum = Math.floor(Math.random() * 1000);
-            return `${prefixes[Math.floor(Math.random() * prefixes.length)]}${suffixes[Math.floor(Math.random() * suffixes.length)]}${randomNum}`;
-        }
-
-        function updateShipSelect(selectElement) {
-            selectElement.innerHTML = '';
-            ownedShips.forEach(ship => {
-                const option = document.createElement('option');
-                option.value = ship;
-                option.innerHTML = `<span class="ship-option"><img src="${shipIcons[ship] || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTAgMjVMNDAgMzVMMjUgNDBMMTAgMjVaIiBmaWxsPSIjRkZGRkZGIi8+PC9zdmc+'}"> ${ship}</span>`;
-                if (ship === player.shipType) option.selected = true;
-                selectElement.appendChild(option);
-            });
-            if (isPremium) {
-                baseShips.forEach(ship => {
-                    if (!ownedShips.includes(ship)) {
-                        const option = document.createElement('option');
-                        option.value = ship;
-                        option.innerHTML = `<span class="ship-option"><img src="${shipIcons[ship]}"> ${ship}</span>`;
-                        selectElement.appendChild(option);
-                    }
-                });
-            }
-        }
-
-        // Settings management
-        function loadSettings() {
-            const savedImage = localStorage.getItem('customBgImage');
-            const savedMusic = localStorage.getItem('customBgMusic');
-            const savedTheme = localStorage.getItem('theme');
-            const savedShip = localStorage.getItem('shipType');
-            const savedBulletLetter = localStorage.getItem('bulletLetter');
-            const savedGameVolume = localStorage.getItem('gameVolume');
-            const savedMusicVolume = localStorage.getItem('musicVolume');
-            const savedCustomTheme = JSON.parse(localStorage.getItem('customTheme'));
-            const savedSounds = JSON.parse(localStorage.getItem('customSounds')) || {};
-            const savedAIEnemies = localStorage.getItem('useAIEnemies') === 'true';
-            const savedFont = localStorage.getItem('font');
-            const savedSpeedBoost = localStorage.getItem('speedBoost') === 'true';
-            const savedShieldPack = localStorage.getItem('shieldPack') === 'true';
-            const savedCoins = parseInt(localStorage.getItem('playerCoins')) || 0;
-            const savedShipColor = localStorage.getItem('shipColor') || '#FFFF00';
-
-            if (isPremium) {
-                bgImageInput.disabled = false;
-                bgMusicInput.disabled = false;
-                document.getElementById('premium-options').style.display = 'block';
-                player.fireRate = 15;
-                player.lives = 3;
-                if (savedSpeedBoost) player.speedBoost = true;
-                if (savedShieldPack) player.shieldPack = true;
-            }
-
-            customBgImage = new Image();
-            customBgImage.src = savedImage && isPremium ? savedImage : 'assets/background.jpg';
-            customBgImage.onload = () => {
-                drawBackground();
-                document.body.style.backgroundImage = `url(${customBgImage.src})`;
-                document.body.style.backgroundSize = 'cover';
-                showMessage('Background image loaded!');
-            };
-            customBgImage.onerror = () => {
-                console.error('Error loading background image');
-                showMessage('Failed to load background image.');
-                customBgImage.src = 'assets/background.jpg';
-            };
-
-            backgroundMusic = new Audio(savedMusic && isPremium ? savedMusic : musicSelect.value);
-            backgroundMusic.loop = true;
-            backgroundMusic.volume = 0;
-            backgroundMusic.play().then(() => {
-                backgroundMusic.volume = isMuted ? 0 : musicVolumeLevel;
-            }).catch(err => {
-                console.error('Error playing background music:', err);
-                showMessage('Failed to play background music.');
-            });
-
-            if (savedTheme) {
-                themeSelect.value = savedTheme;
-                if (savedTheme === 'custom' && savedCustomTheme) {
-                    themes.custom = savedCustomTheme;
-                    document.getElementById('player-color').value = savedCustomTheme.playerColor;
-                    document.getElementById('pacman-color').value = savedCustomTheme.pacmanColor;
-                    document.getElementById('ghost-color').value = savedCustomTheme.ghostColor;
-                    document.getElementById('bullet-color').value = savedCustomTheme.bulletColor;
-                    document.getElementById('bg-color').value = savedCustomTheme.bgColor;
-                    document.getElementById('border-color').value = savedCustomTheme.borderColor;
-                    document.getElementById('button-color').value = savedCustomTheme.buttonColor;
-                    document.getElementById('menu-color').value = savedCustomTheme.menuColor;
-                    document.getElementById('text-color').value = savedCustomTheme.textColor;
+        // Event Listeners
+        document.addEventListener('keydown', (e) => {
+            if (gameOver && e.code === 'Space') restartGame();
+            if (!gameOver && !isPaused) {
+                switch (e.code) {
+                    case 'ArrowLeft': player.dx = -player.speed; break;
+                    case 'ArrowRight': player.dx = player.speed; break;
+                    case 'ArrowUp': player.dy = -player.speed; break;
+                    case 'ArrowDown': player.dy = player.speed; break;
+                    case 'Space': isShooting = true; break;
                 }
             }
-            if (savedShip && ownedShips.includes(savedShip)) player.shipType = savedShip;
-            if (savedBulletLetter) {
-                player.bulletLetter = savedBulletLetter;
-                bulletLetterInput.value = savedBulletLetter;
-                pauseBulletLetterInput.value = savedBulletLetter;
+            if (e.code === 'Escape' && !gameOver) pauseGame();
+        });
+        document.addEventListener('keyup', (e) => {
+            switch (e.code) {
+                case 'ArrowLeft':
+                case 'ArrowRight': player.dx = 0; break;
+                case 'ArrowUp':
+                case 'ArrowDown': player.dy = 0; break;
+                case 'Space': isShooting = false; break;
             }
-            if (savedGameVolume) {
-                gameVolumeLevel = parseFloat(savedGameVolume);
-                gameVolume.value = gameVolumeLevel;
-            }
-            if (savedMusicVolume) {
-                musicVolumeLevel = parseFloat(savedMusicVolume);
-                musicVolume.value = musicVolumeLevel;
-                if (backgroundMusic) backgroundMusic.volume = isMuted ? 0 : musicVolumeLevel;
-            }
-            for (let sound in savedSounds) {
-                if (savedSounds[sound]) customSounds[sound] = new Audio(savedSounds[sound]);
-            }
-            if (isPremium && savedAIEnemies) {
-                useAIEnemies = true;
-                aiEnemiesCheckbox.checked = true;
-            }
-            if (isPremium && savedFont) {
-                fontSelect.value = savedFont;
-                changeFont();
-            }
-            player.coins = savedCoins;
-            player.shipColor = savedShipColor;
-            shipColorPicker.value = savedShipColor;
-            coinsDisplay.textContent = `Coins: ${player.coins}`;
-            applyTheme();
-            updateLeaderboardDisplay();
-            updateShipSelect(shipSelect);
-            updateShipSelect(pauseShipSelect);
-            checkDailyReward();
-            updatePriceInputs();
-        }
+        });
 
-        function updatePriceInputs() {
-            document.getElementById('price-premium').value = prices.premium.toFixed(2);
-            document.getElementById('price-ship').value = prices.ship.toFixed(2);
-            document.getElementById('price-random').value = prices.random.toFixed(2);
-            document.getElementById('price-speedboost').value = prices.speedboost.toFixed(2);
-            document.getElementById('price-shieldpack').value = prices.shieldpack.toFixed(2);
-        }
-
-        function savePrices() {
-            prices.premium = parseFloat(document.getElementById('price-premium').value) || defaultPrices.premium;
-            prices.ship = parseFloat(document.getElementById('price-ship').value) || defaultPrices.ship;
-            prices.random = parseFloat(document.getElementById('price-random').value) || defaultPrices.random;
-            prices.speedboost = parseFloat(document.getElementById('price-speedboost').value) || defaultPrices.speedboost;
-            prices.shieldpack = parseFloat(document.getElementById('price-shieldpack').value) || defaultPrices.shieldpack;
-            localStorage.setItem('prices', JSON.stringify(prices));
-            initPayPalButtons();
-            showMessage('Prices saved successfully!');
-        }
-
-        function applyTheme() {
-            theme = themes[themeSelect.value];
-            canvas.style.borderColor = theme.borderColor;
-            const buttons = document.querySelectorAll('button:not(#sound-btn):not(#shoot-btn):not(#pause-resume-btn):not(#debug-toggle-btn)');
-            buttons.forEach(btn => btn.style.background = theme.buttonColor);
-            shootBtn.style.background = `rgba(${parseInt(theme.buttonColor.slice(1,3), 16)}, ${parseInt(theme.buttonColor.slice(3,5), 16)}, ${parseInt(theme.buttonColor.slice(5,7), 16)}, 0.5)`;
-            menu.style.background = theme.menuColor;
-            settingsMenu.style.background = theme.menuColor;
-            gameOverMenu.style.background = `rgba(${parseInt(theme.menuColor.slice(1,3), 16)}, ${parseInt(theme.menuColor.slice(3,5), 16)}, ${parseInt(theme.menuColor.slice(5,7), 16)}, 0.8)`;
-            pauseMenu.style.background = `rgba(${parseInt(theme.menuColor.slice(1,3), 16)}, ${parseInt(theme.menuColor.slice(3,5), 16)}, ${parseInt(theme.menuColor.slice(5,7), 16)}, 0.8)`;
-            achievementsMenu.style.background = `rgba(${parseInt(theme.menuColor.slice(1,3), 16)}, ${parseInt(theme.menuColor.slice(3,5), 16)}, ${parseInt(theme.menuColor.slice(5,7), 16)}, 0.8)`;
-            shopMenu.style.background = `rgba(${parseInt(theme.menuColor.slice(1,3), 16)}, ${parseInt(theme.menuColor.slice(3,5), 16)}, ${parseInt(theme.menuColor.slice(5,7), 16)}, 0.8)`;
-            debugMenu.style.background = `rgba(${parseInt(theme.menuColor.slice(1,3), 16)}, ${parseInt(theme.menuColor.slice(3,5), 16)}, ${parseInt(theme.menuColor.slice(5,7), 16)}, 0.5)`;
-            tutorialMenu.style.background = `rgba(${parseInt(theme.menuColor.slice(1,3), 16)}, ${parseInt(theme.menuColor.slice(3,5), 16)}, ${parseInt(theme.menuColor.slice(5,7), 16)}, 0.8)`;
-            document.querySelectorAll('#menu, #settings-menu, #game-over-menu, #pause-menu, #achievements-menu, #shop-menu, #debug-menu, #tutorial-menu, #score, #level, #coins, #final-score, #leaderboard, label, #made-by, .shop-item-name').forEach(el => {
-                el.style.color = theme.textColor;
-                el.style.fontFamily = fontSelect.value || 'Arial';
-            });
-            customThemeDiv.style.display = themeSelect.value === 'custom' ? 'block' : 'none';
-        }
-
-        // Event handlers
-        function changeTheme() {
-            applyTheme();
-        }
-
-        function changeShip() {
-            if (ownedShips.includes(shipSelect.value) || isPremium) {
-                player.shipType = shipSelect.value;
-                localStorage.setItem('shipType', player.shipType);
-                pauseShipSelect.value = player.shipType;
-            } else {
-                showMessage('You must own this ship or be a premium user to use it!');
-                shipSelect.value = player.shipType;
-            }
-        }
-
-        function changeShipFromPause() {
-            if (ownedShips.includes(pauseShipSelect.value) || isPremium) {
-                player.shipType = pauseShipSelect.value;
-                localStorage.setItem('shipType', player.shipType);
-                shipSelect.value = player.shipType;
-            } else {
-                showMessage('You must own this ship or be a premium user to use it!');
-                pauseShipSelect.value = player.shipType;
-            }
-        }
-
-        function updateBulletLetter() {
-            player.bulletLetter = bulletLetterInput.value.toUpperCase() || 'B';
-            localStorage.setItem('bulletLetter', player.bulletLetter);
-            pauseBulletLetterInput.value = player.bulletLetter;
-        }
-
-        function updateBulletLetterFromPause() {
-            player.bulletLetter = pauseBulletLetterInput.value.toUpperCase() || 'B';
-            localStorage.setItem('bulletLetter', player.bulletLetter);
-            bulletLetterInput.value = player.bulletLetter;
-        }
-
-        function changeGameMode() {
-            gameMode = gameModeSelect.value;
-            init();
-            showMessage(`Game mode changed to ${gameMode}!`);
-        }
-
-        function changeMusic() {
-            backgroundMusic.src = musicSelect.value;
-            backgroundMusic.loop = true;
-            backgroundMusic.volume = isMuted ? 0 : musicVolumeLevel;
-            if (!isMuted) backgroundMusic.play().catch(() => showMessage('Failed to play music.'));
-            localStorage.setItem('customBgMusic', musicSelect.value);
-        }
-
-        function redeemCode() {
-            const code = codeInput.value.trim().toLowerCase();
-            switch (code) {
-                case 'philo debug':
-                    showDebugMenu();
-                    codeInput.value = '';
-                    break;
-                case 'gekyume':
-                    isPremium = true;
-                    localStorage.setItem('isPremium', 'true');
-                    bgImageInput.disabled = false;
-                    bgMusicInput.disabled = false;
-                    document.getElementById('premium-options').style.display = 'block';
-                    player.fireRate = 15;
-                    player.lives = 3;
-                    showMessage('Premium features unlocked! Enjoy faster fire rate, extra lives, and more customization.');
-                    updateShipSelect(shipSelect);
-                    updateShipSelect(pauseShipSelect);
-                    codeInput.value = '';
-                    break;
-                case 'easteregg':
-                    if (!ownedShips.includes('secretShip')) {
-                        ownedShips.push('secretShip');
-                        localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
-                        updateShipSelect(shipSelect);
-                        updateShipSelect(pauseShipSelect);
-                        showMessage('Secret Ship unlocked! Check your ship selection.');
-                    }
-                    codeInput.value = '';
-                    break;
-                case '5ship':
-                    for (let i = 0; i < 5; i++) {
-                        const newShip = generateUniqueShipName();
-                        if (!ownedShips.includes(newShip)) {
-                            ownedShips.push(newShip);
-                        }
-                    }
-                    localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
-                    updateShipSelect(shipSelect);
-                    updateShipSelect(pauseShipSelect);
-                    showMessage('5 unique AI-generated ships unlocked!');
-                    codeInput.value = '';
-                    break;
-                case '5fonts':
-                    isPremium = true;
-                    localStorage.setItem('isPremium', 'true');
-                    fontSelect.disabled = false;
-                    document.getElementById('premium-options').style.display = 'block';
-                    showMessage('Premium fonts unlocked! Customize your text in settings.');
-                    codeInput.value = '';
-                    break;
-                case '5themes':
-                    isPremium = true;
-                    localStorage.setItem('isPremium', 'true');
-                    customThemeDiv.style.display = 'block';
-                    themeSelect.options[0].text = 'Custom';
-                    showMessage('Custom themes unlocked! Create your own theme in settings.');
-                    codeInput.value = '';
-                    break;
-                case '5games':
-                    gameModeSelect.disabled = false;
-                    showMessage('All game modes unlocked! Choose your mode in the pause menu.');
-                    codeInput.value = '';
-                    break;
-                default:
-                    showMessage('Invalid code! Please try a valid redemption code.');
-            }
-        }
-
-        function toggleMute() {
-            isMuted = !isMuted;
-            if (isMuted) {
-                backgroundMusic.volume = 0;
-                for (let sound in customSounds) {
-                    if (customSounds[sound]) customSounds[sound].volume = 0;
+        // Joystick Controls
+        let joystickActive = false;
+        joystick.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            joystickActive = true;
+        });
+        joystick.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (joystickActive) {
+                const touch = e.touches[0];
+                const rect = joystick.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                let dx = touch.clientX - centerX;
+                let dy = touch.clientY - centerY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const maxDistance = rect.width / 2 - joystickNub.offsetWidth / 2;
+                if (distance > maxDistance) {
+                    dx = dx * maxDistance / distance;
+                    dy = dy * maxDistance / distance;
                 }
-                soundBtn.textContent = '🔇';
-                soundBtn.classList.add('muted');
-            } else {
-                backgroundMusic.volume = musicVolumeLevel;
-                for (let sound in customSounds) {
-                    if (customSounds[sound]) customSounds[sound].volume = gameVolumeLevel;
-                }
-                soundBtn.textContent = '🔊';
-                soundBtn.classList.remove('muted');
+                joystickNub.style.left = `calc(50% + ${dx}px)`;
+                joystickNub.style.top = `calc(50% + ${dy}px)`;
+                player.dx = (dx / maxDistance) * player.speed;
+                player.dy = (dy / maxDistance) * player.speed;
             }
-        }
-
-        function uploadBackgroundImage() {
-            if (!isPremium) {
-                showMessage('Premium required to upload background images!');
-                return;
+        });
+        document.addEventListener('touchend', (e) => {
+            if (e.target !== shootBtn) {
+                joystickActive = false;
+                joystickNub.style.left = '50%';
+                joystickNub.style.top = '50%';
+                player.dx = 0;
+                player.dy = 0;
             }
-            const file = bgImageInput.files[0];
-            if (!file) {
-                showMessage('No file selected!');
-                return;
+        });
+        shootBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            isShooting = true;
+        });
+        shootBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            isShooting = false;
+        });
+
+        // Game Functions
+        function startGame() {
+            const playerName = document.getElementById('player-name').value.trim();
+            if (playerName) localStorage.setItem('playerName', playerName);
+            menu.style.display = 'none';
+            canvas.style.display = 'block';
+            scoreDisplay.style.display = 'block';
+            levelDisplay.style.display = 'block';
+            coinsDisplay.style.display = 'block';
+            controlBar.style.display = 'flex';
+            if (isMobile()) {
+                joystick.style.display = 'block';
+                shootBtn.style.display = 'block';
             }
-            const extension = file.name.split('.').pop().toLowerCase();
-            if (['png', 'jpg', 'jpeg'].includes(extension)) {
-                const url = URL.createObjectURL(file);
-                customBgImage = new Image();
-                customBgImage.src = url;
-                customBgImage.onload = () => {
-                    drawBackground();
-                    document.body.style.backgroundImage = `url(${customBgImage.src})`;
-                    document.body.style.backgroundSize = 'cover';
-                    localStorage.setItem('customBgImage', url);
-                    showMessage('Background image uploaded successfully!');
-                };
-                customBgImage.onerror = () => {
-                    showMessage('Failed to load uploaded image. Please try again.');
-                    customBgImage = null;
-                };
-            } else {
-                showMessage('Please upload a valid PNG or JPG image.');
-            }
-        }
-
-        function uploadBackgroundMusic() {
-            if (!isPremium) {
-                showMessage('Premium required to upload background music!');
-                return;
-            }
-            const file = bgMusicInput.files[0];
-            if (!file) {
-                showMessage('No file selected!');
-                return;
-            }
-            const extension = file.name.split('.').pop().toLowerCase();
-            if (extension === 'mp3') {
-                const url = URL.createObjectURL(file);
-                backgroundMusic.src = url;
-                backgroundMusic.loop = true;
-                backgroundMusic.volume = isMuted ? 0 : musicVolumeLevel;
-                localStorage.setItem('customBgMusic', url);
-                if (!isMuted) backgroundMusic.play().catch(() => showMessage('Failed to play uploaded music.'));
-                showMessage('Background music uploaded successfully!');
-            } else {
-                showMessage('Please upload a valid MP3 file.');
-            }
-        }
-
-        function uploadSound(type) {
-            const file = document.getElementById(`${type}-sound`).files[0];
-            if (!file) {
-                showMessage('No file selected!');
-                return;
-            }
-            const extension = file.name.split('.').pop().toLowerCase();
-            if (extension === 'mp3') {
-                const url = URL.createObjectURL(file);
-                customSounds[type] = new Audio(url);
-                customSounds[type].volume = isMuted ? 0 : gameVolumeLevel;
-                showMessage(`${type} sound uploaded successfully!`);
-            } else {
-                showMessage('Please upload a valid MP3 file.');
-            }
-        }
-
-        function saveSettings() {
-            if (customBgImage) localStorage.setItem('customBgImage', customBgImage.src);
-            if (backgroundMusic) localStorage.setItem('customBgMusic', backgroundMusic.src);
-            localStorage.setItem('theme', themeSelect.value);
-            localStorage.setItem('shipType', player.shipType);
-            localStorage.setItem('bulletLetter', player.bulletLetter);
-            localStorage.setItem('gameVolume', gameVolume.value);
-            localStorage.setItem('musicVolume', musicVolume.value);
-            localStorage.setItem('achievements', JSON.stringify(achievements));
-            localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
-            localStorage.setItem('isPremium', isPremium);
-            localStorage.setItem('useAIEnemies', useAIEnemies);
-            localStorage.setItem('font', fontSelect.value);
-            localStorage.setItem('speedBoost', player.speedBoost);
-            localStorage.setItem('shieldPack', player.shieldPack);
-            localStorage.setItem('playerCoins', player.coins);
-            localStorage.setItem('shipColor', player.shipColor);
-            gameVolumeLevel = parseFloat(gameVolume.value);
-            musicVolumeLevel = parseFloat(musicVolume.value);
-            player.shipColor = shipColorPicker.value;
-            if (backgroundMusic) backgroundMusic.volume = isMuted ? 0 : musicVolumeLevel;
-            if (themeSelect.value === 'custom') {
-                themes.custom = {
-                    playerColor: document.getElementById('player-color').value,
-                    pacmanColor: document.getElementById('pacman-color').value,
-                    ghostColor: document.getElementById('ghost-color').value,
-                    bulletColor: document.getElementById('bullet-color').value,
-                    bgColor: document.getElementById('bg-color').value,
-                    borderColor: document.getElementById('border-color').value,
-                    buttonColor: document.getElementById('button-color').value,
-                    menuColor: document.getElementById('menu-color').value,
-                    textColor: document.getElementById('text-color').value
-                };
-                localStorage.setItem('customTheme', JSON.stringify(themes.custom));
-            }
-            const savedSounds = {};
-            for (let sound in customSounds) {
-                if (customSounds[sound]) savedSounds[sound] = customSounds[sound].src;
-            }
-            localStorage.setItem('customSounds', JSON.stringify(savedSounds));
-            applyTheme();
-            showMessage('Settings saved!');
-        }
-
-        function updateLeaderboardDisplay() {
-            leaderboard.sort((a, b) => b.score - a.score);
-            leaderboard = leaderboard.slice(0, 5);
-            leaderboardMain.innerHTML = '<strong>Local Leaderboard:</strong><br>' + leaderboard.map((entry, i) => `${i + 1}. ${entry.name}: ${entry.score}`).join('<br>');
-            leaderboardGO.innerHTML = leaderboardMain.innerHTML;
-        }
-
-        function showLeaderboard(source) {
-            const leaderboardDiv = source === 'main' ? leaderboardMain : leaderboardGO;
-            leaderboardDiv.style.display = leaderboardDiv.style.display === 'block' ? 'none' : 'block';
-            syncLeaderboard();
-        }
-
-        function showRules() {
-            const rulesSection = document.getElementById('rules-section');
-            leaderboardMain.style.display = 'none';
-            if (rulesSection.style.display === 'block') {
-                rulesSection.style.display = 'none';
-            } else {
-                rulesSection.style.display = 'block';
-                rulesSection.innerHTML = `
-                    <strong>Rules of Space Pac-Invaders:</strong><br>
-                    1. <strong>Controls:</strong> Move your ship with arrow keys (PC) or joystick (mobile). Shoot with spacebar (PC) or shoot button (mobile). Special abilities: 'B' for bombs (Bomber ship), 'R' for radar (Scout ship).<br>
-                    2. <strong>Objective:</strong> Destroy Pac-Men (50 points, 10 coins each) and collect ghosts (50 points, 5 coins each) to earn points and coins.<br>
-                    3. <strong>Lives:</strong> Avoid Pac-Men and bosses (2x damage). Non-premium starts with 1 life, premium with 3. Shields protect temporarily.<br>
-                    4. <strong>Levels & Bosses:</strong> Clear Pac-Men to advance levels in Classic mode. Every 5 levels, face a boss (500 points, 100 coins, more health).<br>
-                    5. <strong>Game Modes:</strong> Classic (level-based), Endless (infinite enemies), Survival (fast enemies, limited lives). Switch modes in pause menu.<br>
-                    6. <strong>Upgrades:</strong> Collect power-ups (gun, ship, shield, speed, multi-shot) for temporary boosts (e.g., 10-second speed increase).<br>
-                    7. <strong>Ships:</strong> Choose ships with unique abilities (e.g., Bomber drops bombs, Scout has radar). Non-premium starts with Scout, Ranger, Blaster.<br>
-                    8. <strong>Coins:</strong> Earn coins from Pac-Men, ghosts, levels (50 coins), and daily login (100 coins). Spend in shop or save for upgrades.<br>
-                    9. <strong>Shop:</strong> Buy ships (£1), random AI ships (£0.50), Speed Boost (£2), Shield Pack (£3) with real money via PayPal.<br>
-                    10. <strong>Scoring:</strong> Track scores locally. Share or copy scores from game-over menu. Challenge friends by beating their scores.<br>
-                    11. <strong>Achievements:</strong> Unlock rewards (e.g., Pac-Man Slayer: 50 kills, Boss Buster: 5 bosses) visible in Achievements menu.<br>
-                    12. <strong>Customization:</strong> Change ship color, bullet letter, theme, music, and sounds (premium only for some options) in Settings.<br>
-                    13. <strong>Premium:</strong> Unlock faster fire rate, extra lives, AI enemies, custom fonts/themes via shop purchase or special codes.<br>
-                    14. <strong>Pause/Mute:</strong> Pause with top-center button, mute with top-right button during gameplay.<br>
-                    15. <strong>Tips:</strong> Use shields strategically, master ship abilities, and aim for daily rewards to boost progress!`;
-            }
-        }
-
-        function showAchievements() {
-            menu.style.opacity = '0';
-            setTimeout(() => {
-                menu.style.display = 'none';
-                menu.style.opacity = '1';
-                achievementsMenu.style.display = 'block';
-                achievementsMenu.style.opacity = '0';
-                setTimeout(() => {
-                    achievementsMenu.style.opacity = '1';
-                    updateAchievementsList();
-                }, 10);
-            }, 500);
-        }
-
-        function updateAchievementsList() {
-            const achievementsList = document.getElementById('achievements-list');
-            achievementsList.innerHTML = '';
-            for (let achievement in achievements) {
-                const { name, desc, count, unlocked } = achievements[achievement];
-                const required = achievementRequirements[achievement];
-                const status = unlocked ? 'Unlocked' : `Progress: ${count}/${required}`;
-                const trophy = unlocked ? '🏆' : '';
-                achievementsList.innerHTML += `<div>${name} - ${desc}: ${status} ${trophy}</div>`;
-            }
-        }
-
-        function backToMenuFromAchievements() {
-            achievementsMenu.style.opacity = '0';
-            setTimeout(() => {
-                achievementsMenu.style.display = 'none';
-                achievementsMenu.style.opacity = '1';
-                menu.style.display = 'block';
-                menu.style.opacity = '0';
-                setTimeout(() => menu.style.opacity = '1', 10);
-            }, 500);
-        }
-
-        function showShop() {
-            menu.style.opacity = '0';
-            setTimeout(() => {
-                menu.style.display = 'none';
-                menu.style.opacity = '1';
-                shopMenu.style.display = 'block';
-                shopMenu.style.opacity = '0';
-                setTimeout(() => shopMenu.style.opacity = '1', 10);
-            }, 500);
-        }
-
-        function backToMenuFromShop() {
-            shopMenu.style.opacity = '0';
-            setTimeout(() => {
-                shopMenu.style.display = 'none';
-                shopMenu.style.opacity = '1';
-                menu.style.display = 'block';
-                menu.style.opacity = '0';
-                setTimeout(() => menu.style.opacity = '1', 10);
-            }, 500);
-        }
-
-        function showDebugMenu() {
-            isDebugMode = true;
-            debugToggleBtn.style.display = 'flex';
-            debugMenu.style.display = 'block';
-            debugMenu.style.opacity = '0';
-            debugMenu.style.top = '60px';
-            debugMenu.style.background = 'rgba(0, 0, 0, 0.5)';
-            debugMenu.style.maxHeight = 'calc(100vh - 70px)';
-            setTimeout(() => debugMenu.style.opacity = '1', 10);
-            updatePriceInputs();
-        }
-
-        function toggleDebugMenu() {
-            if (debugMenu.style.display === 'block') {
-                debugMenu.style.opacity = '0';
-                setTimeout(() => debugMenu.style.display = 'none', 500);
-            } else {
-                debugMenu.style.display = 'block';
-                debugMenu.style.opacity = '0';
-                debugMenu.style.top = '60px';
-                debugMenu.style.background = 'rgba(0, 0, 0, 0.5)';
-                debugMenu.style.maxHeight = 'calc(100vh - 70px)';
-                setTimeout(() => debugMenu.style.opacity = '1', 10);
-                updatePriceInputs();
-            }
-        }
-
-        function showTutorial() {
-            menu.style.opacity = '0';
-            setTimeout(() => {
-                menu.style.display = 'none';
-                menu.style.opacity = '1';
-                tutorialMenu.style.display = 'block';
-                tutorialMenu.style.opacity = '0';
-                setTimeout(() => {
-                    tutorialMenu.style.opacity = '1';
-                    document.getElementById('tutorial-content').innerHTML = `
-                        <strong>Tutorial:</strong><br>
-                        1. <strong>Controls:</strong> Use arrow keys (PC) or joystick (mobile) to move your ship. Press spacebar (PC) or shoot button (mobile) to fire.<br>
-                        2. <strong>Objective:</strong> Shoot Pac-Men to earn points (50 each) and coins (10 each). Collect ghosts for bonus points (50) and coins (5).<br>
-                        3. <strong>Upgrades:</strong> Grab power-ups like speed boosts (yellow) or multi-shot (purple) for temporary advantages.<br>
-                        4. <strong>Bosses:</strong> Every 5 levels, face a boss with more health and unique attacks. Defeat for 500 points and 100 coins.<br>
-                        5. <strong>Ships:</strong> Each ship has a unique ability (e.g., Bomber drops bombs, Scout has radar). Choose wisely!<br>
-                        6. <strong>Coins:</strong> Use coins in the shop to buy items, or spend real money for premium options.<br>
-                        7. <strong>Tip:</strong> Stay alive by avoiding Pac-Men, and use shields to survive longer!`;
-                }, 10);
-            }, 500);
-        }
-
-        function backToMenuFromTutorial() {
-            tutorialMenu.style.opacity = '0';
-            setTimeout(() => {
-                tutorialMenu.style.display = 'none';
-                tutorialMenu.style.opacity = '1';
-                menu.style.display = 'block';
-                menu.style.opacity = '0';
-                setTimeout(() => menu.style.opacity = '1', 10);
-            }, 500);
-        }
-
-        function toggleAIEnemies() {
-            if (!isPremium) {
-                showMessage('Premium required to use AI-generated enemies!');
-                aiEnemiesCheckbox.checked = false;
-                return;
-            }
-            useAIEnemies = aiEnemiesCheckbox.checked;
-            localStorage.setItem('useAIEnemies', useAIEnemies);
             initLevel();
-            showMessage(`AI Enemies ${useAIEnemies ? 'enabled' : 'disabled'}!`);
-        }
-
-        function changeFont() {
-            if (!isPremium) {
-                showMessage('Premium required to change font!');
-                fontSelect.value = 'Arial';
-                return;
-            }
-            localStorage.setItem('font', fontSelect.value);
-            applyTheme();
-        }
-
-        function checkDailyReward() {
-            const lastLogin = localStorage.getItem('lastLogin');
-            const today = new Date().toDateString();
-            if (!lastLogin || lastLogin !== today) {
-                player.coins += 100;
-                localStorage.setItem('playerCoins', player.coins);
-                localStorage.setItem('lastLogin', today);
-                coinsDisplay.textContent = `Coins: ${player.coins}`;
-                showMessage('Daily reward granted: 100 coins!');
-            }
-        }
-
-        // Sound effects
-        function playSound(type) {
-            if (isMuted || !audioCtx) return;
-            if (customSounds[type]) {
-                customSounds[type].currentTime = 0;
-                customSounds[type].volume = gameVolumeLevel;
-                customSounds[type].play().catch(() => {});
-            } else {
-                const osc = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-                osc.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                switch(type) {
-                    case 'waka':
-                        osc.type = 'square';
-                        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
-                        osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.1);
-                        gainNode.gain.setValueAtTime(gameVolumeLevel * 0.2, audioCtx.currentTime);
-                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-                        osc.start();
-                        osc.stop(audioCtx.currentTime + 0.2);
-                        break;
-                    case 'death':
-                        osc.type = 'square';
-                        osc.frequency.setValueAtTime(784, audioCtx.currentTime);
-                        osc.frequency.exponentialRampToValueAtTime(523, audioCtx.currentTime + 0.3);
-                        gainNode.gain.setValueAtTime(gameVolumeLevel * 0.3, audioCtx.currentTime);
-                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-                        osc.start();
-                        osc.stop(audioCtx.currentTime + 0.3);
-                        break;
-                    case 'shoot':
-                        osc.type = 'square';
-                        osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-                        osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.1);
-                        gainNode.gain.setValueAtTime(gameVolumeLevel * 0.2, audioCtx.currentTime);
-                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-                        osc.start();
-                        osc.stop(audioCtx.currentTime + 0.1);
-                        break;
-                    case 'enemyHit':
-                        osc.type = 'square';
-                        osc.frequency.setValueAtTime(220, audioCtx.currentTime);
-                        osc.frequency.exponentialRampToValueAtTime(110, audioCtx.currentTime + 0.15);
-                        gainNode.gain.setValueAtTime(gameVolumeLevel * 0.25, audioCtx.currentTime);
-                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-                        osc.start();
-                        osc.stop(audioCtx.currentTime + 0.15);
-                        break;
-                    case 'upgrade':
-                        osc.type = 'triangle';
-                        osc.frequency.setValueAtTime(440, audioCtx.currentTime);
-                        osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.2);
-                        gainNode.gain.setValueAtTime(gameVolumeLevel * 0.3, audioCtx.currentTime);
-                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-                        osc.start();
-                        osc.stop(audioCtx.currentTime + 0.3);
-                        break;
-                    case 'bomb':
-                        osc.type = 'sine';
-                        osc.frequency.setValueAtTime(110, audioCtx.currentTime);
-                        osc.frequency.exponentialRampToValueAtTime(55, audioCtx.currentTime + 0.5);
-                        gainNode.gain.setValueAtTime(gameVolumeLevel * 0.4, audioCtx.currentTime);
-                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-                        osc.start();
-                        osc.stop(audioCtx.currentTime + 0.5);
-                        break;
-                }
-            }
-        }
-
-        // Game initialization
-        function initBackground() {
-            backgroundStars = [];
-            for (let i = 0; i < 300; i++) {
-                backgroundStars.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    size: Math.random() * 5 + 1,
-                    speed: Math.random() * 0.5 + 0.5,
-                    color: Math.random() < 0.8 ? '#FFFFFF' : theme.playerColor
-                });
-            }
+            backgroundMusic.play();
+            gameLoop();
         }
 
         function initLevel() {
             pacmen = [];
-            ghosts = [];
-            upgrades = [];
             bosses = [];
-            let pacmanCount = gameMode === 'endless' ? 10 : level * 3;
-            for (let i = 0; i < pacmanCount; i++) {
+            upgrades = [];
+            explosions = [];
+            ghosts = [];
+            for (let i = 0; i < 5 + level; i++) {
                 pacmen.push({
                     x: Math.random() * (canvas.width - 40),
                     y: -40,
                     size: 40,
-                    speed: gameMode === 'survival' ? 2 + level * 0.5 : 1 + level * 0.5,
+                    speed: 1 + level * 0.5,
                     mouthAngle: 0,
                     mouthSpeed: 0.05,
                     spinAngle: 0,
@@ -1467,734 +792,30 @@
                     y: -100,
                     size: 100,
                     speed: 1 + level * 0.2,
-                    health: 10 + level * 2,
-                    angle: 0,
-                    spinSpeed: 0.02
+                    health: 10 + level * 2
                 });
             }
-            if (Math.random() < (isPremium ? 0.75 : 0.5)) {
-                upgrades.push({
-                    x: Math.random() * (canvas.width - 20),
-                    y: -20,
-                    size: 20,
-                    speed: 2,
-                    type: ['gun', 'ship', 'shield', 'speed', 'multi'][Math.floor(Math.random() * 5)],
-                    color: ['#FF0000', '#0000FF', '#00FF00', '#FFFF00', '#FF00FF'][Math.floor(Math.random() * 5)]
-                });
-            }
-        }
-
-        function spawnGhost() {
-            if (Math.random() < 0.02) {
-                ghosts.push({
-                    x: Math.random() * (canvas.width - 20),
-                    y: -20,
-                    size: 20,
-                    speed: 2,
-                    type: Math.floor(Math.random() * 4)
-                });
-            }
-        }
-
-        function init() {
-            score = 0;
-            level = 1;
-            gameOver = false;
-            isPaused = false;
-            player.x = canvas.width / 2;
-            player.y = canvas.height - 60;
-            player.dx = 0;
-            player.dy = 0;
-            player.shootCooldown = 0;
-            player.speed = player.speedBoost ? 10 : 5;
-            player.bulletSpeed = 10;
-            player.fireRate = isPremium ? 15 : 20;
-            player.bulletCount = 1;
-            player.shipLevel = 0;
-            player.frameCount = 0;
-            player.wheelAngle = 0;
-            player.propellerAngle = 0;
-            player.lightAngle = 0;
-            player.flameOffset = 0;
-            player.flapAngle = 0;
-            player.shield = player.shieldPack ? 200 : 0;
-            player.lives = isPremium ? 3 : 1;
-            player.bombCooldown = 0;
-            player.radarActive = false;
-            isShooting = false;
-            bullets = [];
-            pacmen = [];
-            ghosts = [];
-            upgrades = [];
-            bosses = [];
-            explosions = [];
-            ghostSpawnTimer = 0;
-            gameOverMenu.style.display = 'none';
-            pauseMenu.style.display = 'none';
-            achievementsMenu.style.display = 'none';
-            shopMenu.style.display = 'none';
-            debugMenu.style.display = 'none';
-            tutorialMenu.style.display = 'none';
-            leaderboardMain.style.display = 'none';
-            leaderboardGO.style.display = 'none';
-            document.getElementById('control-bar').style.display = 'flex';
-            if (isDebugMode) debugToggleBtn.style.display = 'flex';
-            initLevel();
-            initBackground();
-            applyTheme();
             scoreDisplay.textContent = `Score: ${score}`;
             levelDisplay.textContent = `Level: ${level}`;
             coinsDisplay.textContent = `Coins: ${player.coins}`;
         }
 
-        function startGame() {
-            if (!playerNameInput.value.trim()) {
-                showMessage('Please enter your name!');
-                return;
-            }
-            initAudioContext();
-            menu.style.opacity = '0';
-            setTimeout(() => {
-                menu.style.display = 'none';
-                menu.style.opacity = '1';
-                canvas.style.display = 'block';
-                scoreDisplay.style.display = 'block';
-                levelDisplay.style.display = 'block';
-                coinsDisplay.style.display = 'block';
-                document.getElementById('control-bar').style.display = 'flex';
-                if (isMobile) {
-                    joystick.style.display = 'block';
-                    shootBtn.style.display = 'block';
-                }
-                init();
-                gameLoop();
-            }, 500);
-        }
-
-        function restartGame() {
-            gameOverMenu.style.opacity = '0';
-            setTimeout(() => {
-                gameOverMenu.style.display = 'none';
-                gameOverMenu.style.opacity = '1';
-                document.getElementById('control-bar').style.display = 'flex';
-                if (isMobile) {
-                    joystick.style.display = 'block';
-                    shootBtn.style.display = 'block';
-                }
-                init();
-                gameLoop();
-            }, 300);
-        }
-
-        function showSettings() {
-            menu.style.opacity = '0';
-            setTimeout(() => {
-                menu.style.display = 'none';
-                menu.style.opacity = '1';
-                settingsMenu.style.display = 'block';
-                settingsMenu.style.opacity = '0';
-                setTimeout(() => settingsMenu.style.opacity = '1', 10);
-            }, 500);
-        }
-
-        function showSettingsFromGameOver() {
-            gameOverMenu.style.opacity = '0';
-            setTimeout(() => {
-                gameOverMenu.style.display = 'none';
-                gameOverMenu.style.opacity = '1';
-                settingsMenu.style.display = 'block';
-                settingsMenu.style.opacity = '0';
-                setTimeout(() => settingsMenu.style.opacity = '1', 10);
-            }, 300);
-        }
-
-        function showSettingsFromPause() {
-            pauseMenu.style.opacity = '0';
-            setTimeout(() => {
-                pauseMenu.style.display = 'none';
-                pauseMenu.style.opacity = '1';
-                settingsMenu.style.display = 'block';
-                settingsMenu.style.opacity = '0';
-                setTimeout(() => settingsMenu.style.opacity = '1', 10);
-            }, 300);
-        }
-
-        function backToMenu() {
-            settingsMenu.style.opacity = '0';
-            setTimeout(() => {
-                settingsMenu.style.display = 'none';
-                settingsMenu.style.opacity = '1';
-                menu.style.display = 'block';
-                menu.style.opacity = '0';
-                setTimeout(() => menu.style.opacity = '1', 10);
-            }, 500);
-        }
-
-        function backToMainMenu() {
-            gameOverMenu.style.opacity = '0';
-            setTimeout(() => {
-                gameOverMenu.style.display = 'none';
-                gameOverMenu.style.opacity = '1';
-                menu.style.display = 'block';
-                menu.style.opacity = '0';
-                setTimeout(() => {
-                    menu.style.opacity = '1';
-                    canvas.style.display = 'none';
-                    scoreDisplay.style.display = 'none';
-                    levelDisplay.style.display = 'none';
-                    coinsDisplay.style.display = 'none';
-                    joystick.style.display = 'none';
-                    shootBtn.style.display = 'none';
-                    document.getElementById('control-bar').style.display = 'none';
-                    leaderboard.push({ name: playerNameInput.value.trim(), score: score });
-                    localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
-                    updateLeaderboardDisplay();
-                }, 10);
-            }, 300);
-        }
-
-        function backToMainMenuFromPause() {
-            pauseMenu.style.opacity = '0';
-            setTimeout(() => {
-                pauseMenu.style.display = 'none';
-                pauseMenu.style.opacity = '1';
-                menu.style.display = 'block';
-                menu.style.opacity = '0';
-                setTimeout(() => {
-                    menu.style.opacity = '1';
-                    canvas.style.display = 'none';
-                    scoreDisplay.style.display = 'none';
-                    levelDisplay.style.display = 'none';
-                    coinsDisplay.style.display = 'none';
-                    joystick.style.display = 'none';
-                    shootBtn.style.display = 'none';
-                    document.getElementById('control-bar').style.display = 'none';
-                    leaderboard.push({ name: playerNameInput.value.trim(), score: score });
-                    localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
-                    updateLeaderboardDisplay();
-                }, 10);
-            }, 300);
-        }
-
-        function pauseGame() {
-            if (!gameOver) {
-                if (isPaused) {
-                    resumeGame();
-                } else {
-                    isPaused = true;
-                    pauseMenu.style.display = 'block';
-                    pauseMenu.style.opacity = '0';
-                    setTimeout(() => pauseMenu.style.opacity = '1', 10);
-                    pauseResumeBtn.textContent = '▶️';
-                    pauseResumeBtn.classList.add('paused');
-                }
-            }
-        }
-
-        function resumeGame() {
-            pauseMenu.style.opacity = '0';
-            setTimeout(() => {
-                pauseMenu.style.display = 'none';
-                pauseMenu.style.opacity = '1';
-                isPaused = false;
-                document.getElementById('control-bar').style.display = 'flex';
-                if (isMobile) {
-                    joystick.style.display = 'block';
-                    shootBtn.style.display = 'block';
-                }
-                pauseResumeBtn.textContent = '⏸️';
-                pauseResumeBtn.classList.remove('paused');
-                gameLoop();
-            }, 300);
-        }
-
-        // Drawing functions
-        function drawBackground() {
-            if (customBgImage && customBgImage.complete) {
-                ctx.drawImage(customBgImage, 0, 0, canvas.width, canvas.height);
-            } else {
-                ctx.fillStyle = theme.bgColor;
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-            }
-            backgroundStars.forEach(star => {
-                ctx.fillStyle = star.color;
-                ctx.beginPath();
-                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-                ctx.fill();
-                star.y += star.speed;
-                if (star.y > canvas.height) {
-                    star.y = -star.size;
-                    star.x = Math.random() * canvas.width;
-                }
-            });
-        }
-
-        function drawPlayer() {
-            ctx.save();
-            ctx.translate(player.x, player.y);
-            ctx.fillStyle = player.shipColor;
-
-            switch (player.shipType) {
-                case 'default':
-                    ctx.beginPath();
-                    ctx.moveTo(0, -player.size / 2);
-                    ctx.lineTo(player.size / 2, player.size / 2);
-                    ctx.lineTo(player.size / 3, player.size / 3);
-                    ctx.lineTo(0, 0);
-                    ctx.lineTo(-player.size / 3, player.size / 3);
-                    ctx.lineTo(-player.size / 2, player.size / 2);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.fillStyle = '#FFFFFF';
-                    ctx.beginPath();
-                    ctx.arc(0, -player.size / 4, player.size / 8, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.fillStyle = `rgba(255, 69, 0, ${Math.sin(player.frameCount * 0.2) * 0.5 + 0.5})`;
-                    ctx.fillRect(-player.size / 4, player.size / 2, player.size / 2, 5 + Math.sin(player.frameCount * 0.1) * 3);
-                    break;
-
-                case 'car':
-                    ctx.fillRect(-player.size / 2, -player.size / 3, player.size, player.size / 2);
-                    ctx.fillStyle = '#FFFFFF';
-                    ctx.fillRect(-player.size / 3, -player.size / 4, player.size / 1.5, player.size / 8);
-                    ctx.fillStyle = '#FFFF00';
-                    ctx.beginPath();
-                    ctx.arc(-player.size / 2.5, -player.size / 6, 3, 0, Math.PI * 2);
-                    ctx.arc(player.size / 2.5, -player.size / 6, 3, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.fillStyle = '#000000';
-                    for (let i = -1; i <= 1; i += 2) {
-                        ctx.save();
-                        ctx.translate(i * player.size / 3, player.size / 6);
-                        ctx.rotate(player.wheelAngle);
-                        ctx.beginPath();
-                        ctx.arc(0, 0, player.size / 8, 0, Math.PI * 2);
-                        ctx.fill();
-                        ctx.restore();
-                    }
-                    break;
-
-                case 'plane':
-                    ctx.beginPath();
-                    ctx.moveTo(0, -player.size / 2);
-                    ctx.lineTo(player.size / 2, player.size / 4);
-                    ctx.lineTo(player.size / 3, player.size / 2);
-                    ctx.lineTo(-player.size / 3, player.size / 2);
-                    ctx.lineTo(-player.size / 2, player.size / 4);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.fillStyle = '#AAAAAA';
-                    ctx.fillRect(-player.size / 6, -player.size / 2, player.size / 3, player.size / 2);
-                    ctx.fillStyle = '#000000';
-                    ctx.save();
-                    ctx.translate(0, -player.size / 2);
-                    ctx.rotate(player.propellerAngle);
-                    ctx.fillRect(-player.size / 8, -player.size / 16, player.size / 4, player.size / 8);
-                    ctx.restore();
-                    break;
-
-                case 'ufo':
-                    ctx.beginPath();
-                    ctx.ellipse(0, 0, player.size / 2, player.size / 4, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.fillStyle = '#AAAAAA';
-                    ctx.beginPath();
-                    ctx.ellipse(0, -player.size / 8, player.size / 3, player.size / 6, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.fillStyle = `rgba(0, 255, 255, ${Math.sin(player.frameCount * 0.2) * 0.5 + 0.5})`;
-                    for (let i = -1; i <= 1; i += 2) {
-                        ctx.beginPath();
-                        ctx.arc(i * player.size / 3, player.size / 4, player.size / 12, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                    break;
-
-                case 'spaceship':
-                    ctx.beginPath();
-                    ctx.moveTo(0, -player.size / 2);
-                    ctx.lineTo(player.size / 2, player.size / 3);
-                    ctx.lineTo(player.size / 3, player.size / 2);
-                    ctx.lineTo(-player.size / 3, player.size / 2);
-                    ctx.lineTo(-player.size / 2, player.size / 3);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.fillStyle = '#FFFFFF';
-                    ctx.beginPath();
-                    ctx.arc(0, -player.size / 4, player.size / 10, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.fillStyle = `rgba(255, 165, 0, ${Math.sin(player.frameCount * 0.2) * 0.5 + 0.5})`;
-                    ctx.fillRect(-player.size / 4, player.size / 2, player.size / 2, 10);
-                    break;
-
-                case 'tank':
-                    ctx.fillRect(-player.size / 2, -player.size / 4, player.size, player.size / 2);
-                    ctx.fillStyle = '#666633';
-                    ctx.save();
-                    ctx.rotate(Math.sin(player.frameCount * 0.05) * 0.1);
-                    ctx.fillRect(-player.size / 8, -player.size / 2, player.size / 4, player.size / 2);
-                    ctx.restore();
-                    ctx.fillStyle = '#333333';
-                    for (let i = -2; i <= 2; i++) {
-                        ctx.fillRect(-player.size / 2 + i * player.size / 5, player.size / 4, player.size / 5, player.size / 8);
-                    }
-                    break;
-
-                case 'dragon':
-                    ctx.beginPath();
-                    ctx.moveTo(0, -player.size / 2);
-                    ctx.lineTo(player.size / 2, 0);
-                    ctx.lineTo(player.size / 3, player.size / 2);
-                    ctx.lineTo(-player.size / 3, player.size / 2);
-                    ctx.lineTo(-player.size / 2, 0);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.fillStyle = '#FF4500';
-                    ctx.beginPath();
-                    ctx.moveTo(0, -player.size / 2);
-                    ctx.lineTo(10 + Math.sin(player.frameCount * 0.1) * 5, -player.size / 2 - 15);
-                    ctx.lineTo(-10 - Math.sin(player.frameCount * 0.1) * 5, -player.size / 2 - 15);
-                    ctx.fill();
-                    break;
-
-                case 'cruiser':
-                    ctx.fillRect(-player.size / 2, -player.size / 2, player.size, player.size);
-                    ctx.fillStyle = '#AAAAAA';
-                    ctx.beginPath();
-                    ctx.arc(0, -player.size / 2, player.size / 4, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.fillStyle = '#FF0000';
-                    ctx.fillRect(-player.size / 4, 0, player.size / 8, player.size / 4);
-                    ctx.fillRect(player.size / 4 - player.size / 8, 0, player.size / 8, player.size / 4);
-                    break;
-
-                case 'bomber':
-                    ctx.beginPath();
-                    ctx.moveTo(0, -player.size / 2);
-                    ctx.lineTo(player.size / 2, player.size / 4);
-                    ctx.lineTo(player.size / 3, player.size / 2);
-                    ctx.lineTo(-player.size / 3, player.size / 2);
-                    ctx.lineTo(-player.size / 2, player.size / 4);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.fillStyle = '#666666';
-                    ctx.fillRect(-player.size / 4, 0, player.size / 2, player.size / 4);
-                    ctx.fillStyle = '#000000';
-                    ctx.fillRect(-player.size / 6, player.size / 2, player.size / 3, player.size / 8);
-                    break;
-
-                case 'pirate':
-                    ctx.fillStyle = '#8B4513';
-                    ctx.beginPath();
-                    ctx.moveTo(-player.size / 2, player.size / 2);
-                    ctx.lineTo(player.size / 2, player.size / 2);
-                    ctx.lineTo(player.size / 3, -player.size / 4);
-                    ctx.lineTo(-player.size / 3, -player.size / 4);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.fillStyle = '#FFFFFF';
-                    ctx.beginPath();
-                    ctx.moveTo(0, -player.size / 2);
-                    ctx.lineTo(player.size / 4, -player.size / 8 + Math.sin(player.frameCount * 0.05) * 5);
-                    ctx.lineTo(-player.size / 4, -player.size / 8 + Math.sin(player.frameCount * 0.05) * 5);
-                    ctx.fill();
-                    ctx.fillStyle = '#000000';
-                    ctx.fillRect(-player.size / 3, 0, player.size / 8, player.size / 8);
-                    ctx.fillRect(player.size / 3 - player.size / 8, 0, player.size / 8, player.size / 8);
-                    ctx.fillStyle = '#FFD700';
-                    for (let i = 0; i < 3; i++) {
-                        ctx.beginPath();
-                        ctx.arc((Math.random() - 0.5) * player.size / 2, (Math.random() - 0.5) * player.size / 2, 2 + Math.sin(player.frameCount * 0.2 + i) * 2, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                    break;
-
-                case 'scout':
-                    ctx.beginPath();
-                    ctx.moveTo(0, -player.size / 2);
-                    ctx.lineTo(player.size / 2, player.size / 2);
-                    ctx.lineTo(-player.size / 2, player.size / 2);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.fillStyle = '#00FF00';
-                    ctx.beginPath();
-                    ctx.arc(0, -player.size / 4, player.size / 8, 0, Math.PI * 2);
-                    ctx.fill();
-                    if (player.radarActive) {
-                        ctx.strokeStyle = '#00FF00';
-                        ctx.lineWidth = 2;
-                        ctx.beginPath();
-                        ctx.arc(0, 0, player.size * 2, 0, Math.PI * 2);
-                        ctx.stroke();
-                    }
-                    break;
-
-                case 'ranger':
-                    ctx.beginPath();
-                    ctx.moveTo(0, -player.size / 2);
-                    ctx.lineTo(player.size / 3, player.size / 2);
-                    ctx.lineTo(-player.size / 3, player.size / 2);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.fillStyle = '#FF00FF';
-                    ctx.fillRect(-player.size / 4, player.size / 2, player.size / 2, 5);
-                    break;
-
-                case 'blaster':
-                    ctx.beginPath();
-                    ctx.arc(0, 0, player.size / 2, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.fillStyle = '#FFFFFF';
-                    ctx.beginPath();
-                    ctx.arc(0, -player.size / 4, player.size / 4, 0, Math.PI * 2);
-                    ctx.fill();
-                    break;
-
-                case 'secretShip':
-                    ctx.beginPath();
-                    ctx.moveTo(0, -player.size / 2);
-                    ctx.lineTo(player.size / 2, player.size / 2);
-                    ctx.lineTo(-player.size / 2, player.size / 2);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.fillStyle = `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.8)`;
-                    ctx.beginPath();
-                    ctx.arc(0, 0, player.size / 3, 0, Math.PI * 2);
-                    ctx.fill();
-                    break;
-
-                default:
-                    ctx.beginPath();
-                    ctx.moveTo(0, -player.size / 2);
-                    ctx.lineTo(player.size / 2, player.size / 2);
-                    ctx.lineTo(-player.size / 2, player.size / 2);
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.fillStyle = `rgba(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255}, 0.8)`;
-                    ctx.beginPath();
-                    ctx.arc(0, 0, player.size / 3, 0, Math.PI * 2);
-                    ctx.fill();
-                    break;
-            }
-
-            if (player.shipLevel >= 1 && player.shipType !== 'dragon') {
-                ctx.fillStyle = '#00FFFF';
-                ctx.fillRect(-player.size / 2 - 5, 0, 5, player.size / 2);
-                ctx.fillRect(player.size / 2, 0, 5, player.size / 2);
-            }
-            if (player.shipLevel >= 2 && player.shipType !== 'dragon') {
-                ctx.fillStyle = '#FF00FF';
-                ctx.beginPath();
-                ctx.moveTo(0, -player.size / 2 - 10);
-                ctx.lineTo(5, -player.size / 2);
-                ctx.lineTo(-5, -player.size / 2);
-                ctx.fill();
-            }
-            if (player.shield > 0) {
-                ctx.strokeStyle = '#00FF00';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.arc(0, 0, player.size / 1.5, 0, Math.PI * 2);
-                ctx.stroke();
-            }
-
-            ctx.restore();
-        }
-
-        function drawPacmen() {
-            pacmen.forEach(pacman => {
-                ctx.save();
-                ctx.translate(pacman.x + pacman.size / 2, pacman.y + pacman.size / 2);
-                ctx.rotate(pacman.spinAngle);
-                ctx.fillStyle = theme.pacmanColor;
-
-                if (pacman.isAI) {
-                    const shape = Math.floor(Math.random() * 3);
-                    if (shape === 0) { // Square AI
-                        ctx.fillRect(-pacman.size / 2, -pacman.size / 2, pacman.size, pacman.size);
-                        ctx.fillStyle = '#000000';
-                        ctx.beginPath();
-                        ctx.arc(0, -pacman.size / 4, pacman.size / 8, 0, Math.PI * 2);
-                        ctx.fill();
-                    } else if (shape === 1) { // Triangle AI
-                        ctx.beginPath();
-                        ctx.moveTo(0, -pacman.size / 2);
-                        ctx.lineTo(pacman.size / 2, pacman.size / 2);
-                        ctx.lineTo(-pacman.size / 2, pacman.size / 2);
-                        ctx.closePath();
-                        ctx.fill();
-                        ctx.fillStyle = '#000000';
-                        ctx.beginPath();
-                        ctx.arc(0, -pacman.size / 4, pacman.size / 8, 0, Math.PI * 2);
-                        ctx.fill();
-                    } else { // Hexagon AI
-                        ctx.beginPath();
-                        for (let i = 0; i < 6; i++) {
-                            ctx.lineTo(
-                                pacman.size / 2 * Math.cos((2 * Math.PI * i) / 6),
-                                pacman.size / 2 * Math.sin((2 * Math.PI * i) / 6)
-                            );
-                        }
-                        ctx.closePath();
-                        ctx.fill();
-                        ctx.fillStyle = '#000000';
-                        ctx.beginPath();
-                        ctx.arc(0, -pacman.size / 4, pacman.size / 8, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                } else {
-                    ctx.beginPath();
-                    ctx.arc(0, 0, pacman.size / 2, pacman.mouthAngle, Math.PI * 2 - pacman.mouthAngle);
-                    ctx.lineTo(0, 0);
-                    ctx.fill();
-                    ctx.fillStyle = '#000000';
-                    ctx.beginPath();
-                    ctx.arc(pacman.size / 5, -pacman.size / 4, pacman.size / 10, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-
-                ctx.restore();
-                pacman.mouthAngle += pacman.mouthSpeed;
-                if (!pacman.isAI && (pacman.mouthAngle > 0.4 || pacman.mouthAngle < 0)) pacman.mouthSpeed = -pacman.mouthSpeed;
-                pacman.spinAngle += 0.02;
-            });
-        }
-
-        function drawGhosts() {
-            const ghostColors = ['#FF0000', '#FFB8FF', '#00FFFF', '#FFB852'];
-            ghosts.forEach(ghost => {
-                ctx.fillStyle = ghostColors[ghost.type];
-                ctx.beginPath();
-                ctx.arc(ghost.x + 10, ghost.y + 8, 10, Math.PI, 0, false);
-                ctx.lineTo(ghost.x + 20, ghost.y + 20);
-                ctx.lineTo(ghost.x + 16, ghost.y + 16);
-                ctx.lineTo(ghost.x + 12, ghost.y + 20);
-                ctx.lineTo(ghost.x + 8, ghost.y + 16);
-                ctx.lineTo(ghost.x + 4, ghost.y + 20);
-                ctx.lineTo(ghost.x, ghost.y + 8);
-                ctx.closePath();
-                ctx.fill();
-                ctx.fillStyle = '#FFFFFF';
-                ctx.beginPath();
-                ctx.arc(ghost.x + 6, ghost.y + 6, 3, 0, Math.PI * 2);
-                ctx.arc(ghost.x + 14, ghost.y + 6, 3, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = '#000000';
-                ctx.beginPath();
-                ctx.arc(ghost.x + 6, ghost.y + 6, 1, 0, Math.PI * 2);
-                ctx.arc(ghost.x + 14, ghost.y + 6, 1, 0, Math.PI * 2);
-                ctx.fill();
-            });
-        }
-
-        function drawBullets() {
-            bullets.forEach(bullet => {
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = theme.bulletColor;
-                ctx.fillStyle = theme.bulletColor;
-                if (player.shipType === 'pirate') {
-                    ctx.font = '20px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText('L', bullet.x, bullet.y);
-                } else {
-                    ctx.font = '20px Arial';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(player.bulletLetter, bullet.x, bullet.y);
-                }
-                ctx.shadowBlur = 0;
-            });
-        }
-
-        function drawUpgrades() {
-            upgrades.forEach(upgrade => {
-                ctx.fillStyle = upgrade.color;
-                ctx.beginPath();
-                ctx.arc(upgrade.x + upgrade.size / 2, upgrade.y + upgrade.size / 2, upgrade.size / 2, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = '#FFFFFF';
-                ctx.font = '12px Arial';
-                ctx.fillText(upgrade.type[0].toUpperCase(), upgrade.x + upgrade.size / 2 - 3, upgrade.y + upgrade.size / 2 + 4);
-            });
-        }
-
-        function drawBosses() {
-            bosses.forEach(boss => {
-                ctx.save();
-                ctx.translate(boss.x + boss.size / 2, boss.y + boss.size / 2);
-                ctx.rotate(boss.angle);
-                ctx.fillStyle = '#FF4500';
-                ctx.beginPath();
-                ctx.arc(0, 0, boss.size / 2, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = '#000000';
-                ctx.beginPath();
-                ctx.arc(boss.size / 4, -boss.size / 4, boss.size / 8, 0, Math.PI * 2);
-                ctx.arc(-boss.size / 4, -boss.size / 4, boss.size / 8, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.restore();
-                boss.angle += boss.spinSpeed;
-            });
-        }
-
-        function drawExplosions() {
-            explosions.forEach((explosion, index) => {
-                ctx.fillStyle = `rgba(255, 165, 0, ${explosion.opacity * 0.5})`;
-                ctx.beginPath();
-                ctx.arc(explosion.x, explosion.y, explosion.size, 0, Math.PI * 2);
-                ctx.fill();
-                explosion.size += 0.5;
-                explosion.opacity -= 0.03;
-                if (explosion.opacity <= 0) explosions.splice(index, 1);
-            });
-        }
-
-        // Game mechanics
         function shoot() {
             if (player.shootCooldown <= 0) {
+                const newBullets = [];
                 if (player.bulletCount === 1) {
-                    bullets.push({ x: player.x, y: player.y - player.size / 2 - 5, speed: player.bulletSpeed });
+                    newBullets.push({ x: player.x, y: player.y - player.size / 2 - 5, speed: player.bulletSpeed });
                 } else if (player.bulletCount === 2) {
-                    bullets.push({ x: player.x - 10, y: player.y - player.size / 2 - 5, speed: player.bulletSpeed });
-                    bullets.push({ x: player.x + 10, y: player.y - player.size / 2 - 5, speed: player.bulletSpeed });
+                    newBullets.push({ x: player.x - 10, y: player.y - player.size / 2 - 5, speed: player.bulletSpeed });
+                    newBullets.push({ x: player.x + 10, y: player.y - player.size / 2 - 5, speed: player.bulletSpeed });
                 } else {
-                    bullets.push({ x: player.x - 15, y: player.y - player.size / 2 - 5, speed: player.bulletSpeed });
-                    bullets.push({ x: player.x, y: player.y - player.size / 2 - 5, speed: player.bulletSpeed });
-                    bullets.push({ x: player.x + 15, y: player.y - player.size / 2 - 5, speed: player.bulletSpeed });
+                    newBullets.push({ x: player.x - 15, y: player.y - player.size / 2 - 5, speed: player.bulletSpeed });
+                    newBullets.push({ x: player.x, y: player.y - player.size / 2 - 5, speed: player.bulletSpeed });
+                    newBullets.push({ x: player.x + 15, y: player.y - player.size / 2 - 5, speed: player.bulletSpeed });
                 }
+                bullets.push(...newBullets);
                 player.shootCooldown = player.fireRate;
                 playSound('shoot');
-            }
-        }
-
-        function dropBomb() {
-            if (player.bombCooldown <= 0 && player.shipType === 'bomber') {
-                explosions.push({ x: player.x, y: player.y + player.size, size: 20, opacity: 1 });
-                pacmen.forEach((pacman, index) => {
-                    if (Math.abs(pacman.x - player.x) < 50 && Math.abs(pacman.y - (player.y + player.size)) < 50) {
-                        pacman.health = 0;
-                        pacmen.splice(index, 1);
-                        score += 50;
-                        player.coins += 10;
-                        achievements.pacmanSlayer.count++;
-                        if (achievements.pacmanSlayer.count >= achievementRequirements.pacmanSlayer && !achievements.pacmanSlayer.unlocked) {
-                            achievements.pacmanSlayer.unlocked = true;
-                            showMessage('Achievement Unlocked: Pac-Man Slayer!');
-                        }
-                        scoreDisplay.textContent = `Score: ${score}`;
-                        coinsDisplay.textContent = `Coins: ${player.coins}`;
-                        playSound('enemyHit');
-                    }
-                });
-                player.bombCooldown = 60;
-                playSound('bomb');
-            }
-        }
-
-        function activateRadar() {
-            if (player.shipType === 'scout' && !player.radarActive) {
-                player.radarActive = true;
-                setTimeout(() => player.radarActive = false, 5000);
             }
         }
 
@@ -2222,19 +843,24 @@
 
             spawnGhost();
 
+            const bulletsToRemove = [];
+            const pacmenToRemove = [];
+            const bossesToRemove = [];
+
             bullets.forEach((bullet, bIndex) => {
                 bullet.y -= bullet.speed;
-                if (bullet.y < 0) bullets.splice(bIndex, 1);
+                if (bullet.y < 0) bulletsToRemove.push(bIndex);
+
                 pacmen.forEach((pacman, eIndex) => {
                     const bulletWidth = 10;
                     const bulletHeight = 20;
                     if (bullet.x > pacman.x - bulletWidth && bullet.x < pacman.x + pacman.size + bulletWidth &&
                         bullet.y > pacman.y - bulletHeight && bullet.y < pacman.y + pacman.size + bulletHeight) {
                         pacman.health--;
-                        bullets.splice(bIndex, 1);
+                        bulletsToRemove.push(bIndex);
                         if (pacman.health <= 0) {
                             explosions.push({ x: pacman.x + pacman.size / 2, y: pacman.y + pacman.size / 2, size: 10, opacity: 1 });
-                            pacmen.splice(eIndex, 1);
+                            pacmenToRemove.push(eIndex);
                             score += 50;
                             player.coins += 10;
                             achievements.pacmanSlayer.count++;
@@ -2268,14 +894,15 @@
                         }
                     }
                 });
+
                 bosses.forEach((boss, bIndex) => {
                     if (bullet.x > boss.x && bullet.x < boss.x + boss.size &&
                         bullet.y > boss.y && bullet.y < boss.y + boss.size) {
                         boss.health--;
-                        bullets.splice(bIndex, 1);
+                        bulletsToRemove.push(bIndex);
                         if (boss.health <= 0) {
                             explosions.push({ x: boss.x + boss.size / 2, y: boss.y + boss.size / 2, size: 50, opacity: 1 });
-                            bosses.splice(bIndex, 1);
+                            bossesToRemove.push(bIndex);
                             score += 500;
                             player.coins += 100;
                             achievements.bossBuster.count++;
@@ -2290,6 +917,10 @@
                     }
                 });
             });
+
+            bulletsToRemove.sort((a, b) => b - a).forEach(index => bullets.splice(index, 1));
+            pacmenToRemove.sort((a, b) => b - a).forEach(index => pacmen.splice(index, 1));
+            bossesToRemove.sort((a, b) => b - a).forEach(index => bosses.splice(index, 1));
 
             pacmen.forEach(pacman => {
                 if (pacman.isAI) {
@@ -2459,536 +1090,779 @@
             }
         }
 
-        function gameLoop() {
-            try {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                drawBackground();
-                drawPlayer();
-                drawPacmen();
-                drawGhosts();
-                drawBullets();
-                drawUpgrades();
-                drawBosses();
-                drawExplosions();
-                update();
-                player.frameCount++;
-                if (!gameOver && !isPaused) requestAnimationFrame(gameLoop);
-            } catch (err) {
-                console.error('Game loop crashed:', err);
-                gameOver = true;
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (backgroundImage) {
+                ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
             }
-        }
 
-        // Event listeners
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft') player.dx = -player.speed;
-            if (e.key === 'ArrowRight') player.dx = player.speed;
-            if (e.key === 'ArrowUp') player.dy = -player.speed;
-            if (e.key === 'ArrowDown') player.dy = player.speed;
-            if (e.key === ' ') {
-                if (!gameOver) isShooting = true;
-                else if (!isMobile && gameOverMenu.style.display === 'block') restartGame();
-            }
-            if (e.key === 'Escape' && !gameOver) pauseGame();
-            if (e.key === 'b' && player.shipType === 'bomber') dropBomb();
-            if (e.key === 'r' && player.shipType === 'scout') activateRadar();
-        });
-
-        document.addEventListener('keyup', (e) => {
-            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') player.dx = 0;
-            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') player.dy = 0;
-            if (e.key === ' ' && !gameOver) isShooting = false;
-        });
-
-        joystick.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            const touch = e.changedTouches[0];
-            moveTouchId = touch.identifier;
-            const rect = joystick.getBoundingClientRect();
-            const dx = (touch.clientX - rect.left - 50) / 50;
-            const dy = (touch.clientY - rect.top - 50) / 50;
-            player.dx = Math.max(-1, Math.min(1, dx)) * player.speed;
-            player.dy = Math.max(-1, Math.min(1, dy)) * player.speed;
-            joystickNub.style.left = `${50 + dx * 30}%`;
-            joystickNub.style.top = `${50 + dy * 30}%`;
-        }, { passive: false });
-
-        joystick.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            for (let touch of e.changedTouches) {
-                if (touch.identifier === moveTouchId) {
-                    const rect = joystick.getBoundingClientRect();
-                    const dx = Math.max(-1, Math.min(1, (touch.clientX - rect.left - 50) / 50));
-                    const dy = Math.max(-1, Math.min(1, (touch.clientY - rect.top - 50) / 50));
-                    player.dx = dx * player.speed;
-                    player.dy = dy * player.speed;
-                    joystickNub.style.left = `${50 + dx * 30}%`;
-                    joystickNub.style.top = `${50 + dy * 30}%`;
-                    break;
-                }
-            }
-        }, { passive: false });
-
-        joystick.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            for (let touch of e.changedTouches) {
-                if (touch.identifier === moveTouchId) {
-                    player.dx = 0;
-                    player.dy = 0;
-                    joystickNub.style.left = '50%';
-                    joystickNub.style.top = '50%';
-                    moveTouchId = null;
-                    break;
-                }
-            }
-        }, { passive: false });
-
-        shootBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            isShooting = true;
-            if (player.shipType === 'bomber') dropBomb();
-            if (player.shipType === 'scout') activateRadar();
-        }, { passive: false });
-
-        shootBtn.addEventListener('touchend', (e) => {
-            e.preventDefault();
-            isShooting = false;
-        }, { passive: false });
-
-        // Debug functions
-        function debugAddScore(amount) { score += amount; scoreDisplay.textContent = `Score: ${score}`; }
-        function debugNextLevel() { level++; initLevel(); levelDisplay.textContent = `Level: ${level}`; }
-        function debugSpawnUpgrade() {
-            upgrades.push({
-                x: player.x, y: player.y - 50, size: 20, speed: 2,
-                type: ['gun', 'ship', 'shield', 'speed', 'multi'][Math.floor(Math.random() * 5)],
-                color: ['#FF0000', '#0000FF', '#00FF00', '#FFFF00', '#FF00FF'][Math.floor(Math.random() * 5)]
+            drawPlayer();
+            bullets.forEach(bullet => {
+                ctx.fillStyle = document.getElementById('bullet-color')?.value || '#FF00FF';
+                ctx.font = '20px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(customBulletLetter, bullet.x, bullet.y);
             });
-        }
-        function debugToggleInvincibility() { isInvincible = !isInvincible; showMessage(`Invincibility ${isInvincible ? 'ON' : 'OFF'}`); }
-        function debugResetGame() { init(); scoreDisplay.textContent = `Score: ${score}`; levelDisplay.textContent = `Level: ${level}`; coinsDisplay.textContent = `Coins: ${player.coins}`; }
-        function debugMaxBullets() { player.bulletCount = 5; showMessage('Max Bullets Activated!'); }
-        function debugMaxSpeed() { player.speed = 15; showMessage('Max Speed Activated!'); }
-        function debugInfiniteShield() { player.shield = Infinity; showMessage('Infinite Shield Activated!'); }
-        function debugKillAllPacmen() { pacmen = []; showMessage('All Pacmen Killed!'); }
-        function debugSpawnGhosts(count) { for (let i = 0; i < count; i++) spawnGhost(); showMessage(`${count} Ghosts Spawned!`); }
-        function debugIncreaseFireRate() { player.fireRate = Math.max(5, player.fireRate - 5); showMessage('Fire Rate Increased!'); }
-        function debugUnlockAllShips() { ownedShips = [...ownedShips, ...baseShips.filter(s => !ownedShips.includes(s))]; updateShipSelect(shipSelect); updateShipSelect(pauseShipSelect); showMessage('All Base Ships Unlocked!'); }
-        function debugDoubleSize() { player.size *= 2; showMessage('Player Size Doubled!'); }
-        function debugHalfSize() { player.size /= 2; showMessage('Player Size Halved!'); }
-        function debugInstantLevel10() { level = 10; initLevel(); levelDisplay.textContent = `Level: ${level}`; showMessage('Jumped to Level 10!'); }
-        function debugSlowEnemies() { pacmen.forEach(p => p.speed /= 2); showMessage('Enemies Slowed!'); }
-        function debugFastEnemies() { pacmen.forEach(p => p.speed *= 2); showMessage('Enemies Sped Up!'); }
-        function debugExtraLives(count) { player.lives += count; showMessage(`Added ${count} Lives! Lives: ${player.lives}`); }
-        function debugUnlockAchievements() { for (let a in achievements) achievements[a].unlocked = true; updateAchievementsList(); showMessage('All Achievements Unlocked!'); }
-        function debugAddCoins(amount) { player.coins += amount; coinsDisplay.textContent = `Coins: ${player.coins}`; showMessage(`Added ${amount} Coins!`); }
+            pacmen.forEach(pacman => {
+                pacman.mouthAngle += pacman.mouthSpeed;
+                if (pacman.mouthAngle > Math.PI / 4 || pacman.mouthAngle < 0) pacman.mouthSpeed *= -1;
+                pacman.spinAngle += 0.05;
+                ctx.save();
+                ctx.translate(pacman.x + pacman.size / 2, pacman.y + pacman.size / 2);
+                ctx.rotate(pacman.spinAngle);
+                ctx.fillStyle = document.getElementById('pacman-color')?.value || '#FFFF00';
+                ctx.beginPath();
+                ctx.arc(0, 0, pacman.size / 2, pacman.mouthAngle, 2 * Math.PI - pacman.mouthAngle);
+                ctx.lineTo(0, 0);
+                ctx.fill();
+                ctx.restore();
+            });
+            bosses.forEach(boss => {
+                ctx.fillStyle = '#FF4500';
+                ctx.fillRect(boss.x, boss.y, boss.size, boss.size);
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(boss.x + 10, boss.y + 10, boss.size - 20, 20);
+            });
+            upgrades.forEach(upgrade => {
+                ctx.fillStyle = upgrade.type === 'gun' ? '#FF00FF' : upgrade.type === 'ship' ? '#00FF00' : upgrade.type === 'shield' ? '#00FFFF' : upgrade.type === 'speed' ? '#FFFF00' : '#FF4500';
+                ctx.fillRect(upgrade.x, upgrade.y, upgrade.size, upgrade.size);
+            });
+            explosions.forEach((explosion, index) => {
+                ctx.fillStyle = `rgba(255, 165, 0, ${explosion.opacity})`;
+                ctx.beginPath();
+                ctx.arc(explosion.x, explosion.y, explosion.size, 0, Math.PI * 2);
+                ctx.fill();
+                explosion.size += 2;
+                explosion.opacity -= 0.05;
+                if (explosion.opacity <= 0) explosions.splice(index, 1);
+            });
+            ghosts.forEach(ghost => {
+                ctx.fillStyle = document.getElementById('ghost-color')?.value || '#FF0000';
+                ctx.beginPath();
+                ctx.arc(ghost.x + 10, ghost.y + 10, 10, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillRect(ghost.x + 5, ghost.y + 10, 10, 10);
+            });
 
-        // Additional features
-        function syncLeaderboard() {
-            console.log('Leaderboard sync not implemented in this version. Use Firebase for online sync.');
+            if (player.shield > 0) {
+                ctx.strokeStyle = '#00FFFF';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(player.x, player.y, player.size / 2 + 5, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = '20px Arial';
+            ctx.fillText(`Lives: ${player.lives}`, canvas.width - 50, 30);
+        }
+
+        function drawPlayer() {
+            ctx.fillStyle = document.getElementById('player-color')?.value || document.getElementById('ship-color').value || '#FFFF00';
+            switch (player.shipType) {
+                case 'car':
+                    ctx.fillRect(player.x - player.size / 2, player.y - player.size / 2, player.size, player.size);
+                    ctx.fillStyle = '#000000';
+                    ctx.beginPath();
+                    ctx.arc(player.x - player.size / 3, player.y + player.size / 2 + 5, 5, 0, Math.PI * 2);
+                    ctx.arc(player.x + player.size / 3, player.y + player.size / 2 + 5, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+                case 'plane':
+                    ctx.beginPath();
+                    ctx.moveTo(player.x, player.y - player.size / 2);
+                    ctx.lineTo(player.x - player.size / 2, player.y + player.size / 2);
+                    ctx.lineTo(player.x + player.size / 2, player.y + player.size / 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#000000';
+                    ctx.save();
+                    ctx.translate(player.x, player.y - player.size / 2);
+                    ctx.rotate(player.propellerAngle);
+                    ctx.fillRect(-10, -2, 20, 4);
+                    ctx.restore();
+                    break;
+                case 'ufo':
+                    ctx.beginPath();
+                    ctx.ellipse(player.x, player.y, player.size / 2, player.size / 4, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = `hsl(${player.lightAngle * 100 % 360}, 100%, 50%)`;
+                    ctx.beginPath();
+                    ctx.arc(player.x, player.y + 5, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+                case 'spaceship':
+                    ctx.beginPath();
+                    ctx.moveTo(player.x, player.y - player.size / 2);
+                    ctx.lineTo(player.x - player.size / 2, player.y + player.size / 2);
+                    ctx.lineTo(player.x + player.size / 2, player.y + player.size / 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#FF4500';
+                    ctx.beginPath();
+                    ctx.moveTo(player.x - player.size / 4, player.y + player.size / 2 + player.flameOffset);
+                    ctx.lineTo(player.x + player.size / 4, player.y + player.size / 2 + player.flameOffset);
+                    ctx.lineTo(player.x, player.y + player.size / 2 + 10 + player.flameOffset);
+                    ctx.fill();
+                    break;
+                case 'tank':
+                    ctx.fillRect(player.x - player.size / 2, player.y - player.size / 4, player.size, player.size / 2);
+                    ctx.fillStyle = '#333333';
+                    ctx.fillRect(player.x - player.size / 4, player.y - player.size / 2, player.size / 2, player.size / 4);
+                    break;
+                case 'dragon':
+                    ctx.beginPath();
+                    ctx.moveTo(player.x, player.y - player.size / 2);
+                    ctx.lineTo(player.x - player.size / 2, player.y + player.size / 2);
+                    ctx.lineTo(player.x + player.size / 2, player.y + player.size / 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#FF4500';
+                    ctx.save();
+                    ctx.translate(player.x - player.size / 2, player.y);
+                    ctx.rotate(player.flapAngle);
+                    ctx.fillRect(0, -10, 20, 10);
+                    ctx.restore();
+                    break;
+                case 'cruiser':
+                    ctx.fillRect(player.x - player.size / 2, player.y - player.size / 2, player.size, player.size);
+                    ctx.fillStyle = '#FF0000';
+                    ctx.beginPath();
+                    ctx.arc(player.x, player.y - player.size / 2 - 5, 10, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+                case 'bomber':
+                    ctx.beginPath();
+                    ctx.moveTo(player.x, player.y - player.size / 2);
+                    ctx.lineTo(player.x - player.size / 2, player.y + player.size / 2);
+                    ctx.lineTo(player.x + player.size / 2, player.y + player.size / 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(player.x - player.size / 4, player.y + player.size / 4, player.size / 2, player.size / 4);
+                    break;
+                case 'pirate':
+                    ctx.beginPath();
+                    ctx.moveTo(player.x, player.y - player.size / 2);
+                    ctx.lineTo(player.x - player.size / 2, player.y + player.size / 2);
+                    ctx.lineTo(player.x + player.size / 2, player.y + player.size / 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#FFD700';
+                    ctx.beginPath();
+                    ctx.arc(player.x, player.y, 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    break;
+                case 'scout':
+                    ctx.beginPath();
+                    ctx.moveTo(player.x, player.y - player.size / 2);
+                    ctx.lineTo(player.x - player.size / 2, player.y + player.size / 2);
+                    ctx.lineTo(player.x + player.size / 2, player.y + player.size / 2);
+                    ctx.fill();
+                    break;
+                default:
+                    ctx.beginPath();
+                    ctx.moveTo(player.x, player.y - player.size / 2);
+                    ctx.lineTo(player.x - player.size / 2, player.y + player.size / 2);
+                    ctx.lineTo(player.x + player.size / 2, player.y + player.size / 2);
+                    ctx.fill();
+            }
+        }
+
+        function gameLoop() {
+            if (!isPaused) {
+                player.frameCount++;
+                update();
+                draw();
+            }
+            requestAnimationFrame(gameLoop);
+        }
+
+        function playSound(sound) {
+            if (!isMuted) {
+                sounds[sound].volume = gameVolume;
+                sounds[sound].currentTime = 0;
+                sounds[sound].play();
+            }
+        }
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            soundBtn.textContent = isMuted ? '🔇' : '🔊';
+            soundBtn.classList.toggle('muted');
+            backgroundMusic.volume = isMuted ? 0 : musicVolume;
+        }
+
+        function pauseGame() {
+            isPaused = !isPaused;
+            pauseMenu.style.display = isPaused ? 'block' : 'none';
+            document.getElementById('pause-resume-btn').textContent = isPaused ? '▶️' : '⏸️';
+            if (!isPaused) resumeGame();
+        }
+
+        function resumeGame() {
+            isPaused = false;
+            pauseMenu.style.display = 'none';
+            document.getElementById('pause-resume-btn').textContent = '⏸️';
+        }
+
+        function restartGame() {
+            gameOver = false;
+            score = 0;
+            level = 1;
+            player.lives = 3;
+            player.x = canvas.width / 2;
+            player.y = canvas.height - 50;
+            player.shield = 0;
+            bullets = [];
+            pacmen = [];
+            bosses = [];
+            upgrades = [];
+            explosions = [];
+            ghosts = [];
+            gameOverMenu.style.display = 'none';
+            initLevel();
+        }
+
+        function showSettings() {
+            menu.style.display = 'none';
+            settingsMenu.style.display = 'block';
+            document.getElementById('game-volume').value = gameVolume;
+            document.getElementById('music-volume').value = musicVolume;
+            document.getElementById(            'ai-enemies').checked = useAIEnemies;
+        }
+
+        function saveSettings() {
+            gameVolume = parseFloat(document.getElementById('game-volume').value);
+            musicVolume = parseFloat(document.getElementById('music-volume').value);
+            backgroundMusic.volume = isMuted ? 0 : musicVolume;
+            useAIEnemies = document.getElementById('ai-enemies').checked;
+            applyTheme();
+            backToMenu();
+        }
+
+        function backToMenu() {
+            settingsMenu.style.display = 'none';
+            menu.style.display = 'block';
+        }
+
+        function showSettingsFromGameOver() {
+            gameOverMenu.style.display = 'none';
+            settingsMenu.style.display = 'block';
+        }
+
+        function showSettingsFromPause() {
+            pauseMenu.style.display = 'none';
+            settingsMenu.style.display = 'block';
+        }
+
+        function backToMainMenu() {
+            gameOverMenu.style.display = 'none';
+            menu.style.display = 'block';
+            canvas.style.display = 'none';
+            scoreDisplay.style.display = 'none';
+            levelDisplay.style.display = 'none';
+            coinsDisplay.style.display = 'none';
+            controlBar.style.display = 'none';
+            joystick.style.display = 'none';
+            shootBtn.style.display = 'none';
+        }
+
+        function backToMainMenuFromPause() {
+            pauseMenu.style.display = 'none';
+            menu.style.display = 'block';
+            canvas.style.display = 'none';
+            scoreDisplay.style.display = 'none';
+            levelDisplay.style.display = 'none';
+            coinsDisplay.style.display = 'none';
+            controlBar.style.display = 'none';
+            joystick.style.display = 'none';
+            shootBtn.style.display = 'none';
+            isPaused = false;
+        }
+
+        function showLeaderboard(section) {
+            const leaderboardDiv = document.getElementById(`leaderboard-${section}`);
+            leaderboardDiv.style.display = 'block';
+            let scores = JSON.parse(localStorage.getItem('leaderboard')) || [];
+            leaderboardDiv.innerHTML = '<h3>Leaderboard</h3>' + scores.map(s => `${s.name}: ${s.score}`).join('<br>');
+        }
+
+        function saveScore() {
+            let scores = JSON.parse(localStorage.getItem('leaderboard')) || [];
+            const playerName = localStorage.getItem('playerName') || 'Player';
+            scores.push({ name: playerName, score: score });
+            scores.sort((a, b) => b.score - a.score);
+            scores = scores.slice(0, 10);
+            localStorage.setItem('leaderboard', JSON.stringify(scores));
         }
 
         function shareScore() {
+            saveScore();
+            const text = `I scored ${score} in Space Pac-Invaders! Can you beat me?`;
             if (navigator.share) {
-                navigator.share({
-                    title: 'PacInvaders Score',
-                    text: `${playerNameInput.value.trim()} scored ${score} in PacInvaders!`,
-                    url: window.location.href
-                }).catch(() => showMessage('Sharing failed!'));
+                navigator.share({ title: 'Space Pac-Invaders', text: text, url: window.location.href });
             } else {
-                showMessage('Sharing only available on mobile browsers with Web Share API support!');
+                prompt('Copy this to share your score:', text);
             }
         }
 
         function copyScore() {
-            navigator.clipboard.writeText(`My PacInvaders Score: ${score}`).then(() => {
-                showMessage('Score copied to clipboard!');
-            }).catch(() => showMessage('Failed to copy score!'));
+            saveScore();
+            const text = `I scored ${score} in Space Pac-Invaders! Can you beat me? Challenge code: ${score}`;
+            navigator.clipboard.writeText(text).then(() => alert('Score copied to clipboard!'));
         }
 
-        function challengeFriend() {
-            const friendScore = parseInt(document.getElementById('challenge-score-input')?.value);
-            if (!isNaN(friendScore) && friendScore > 0) {
-                challengeScore = friendScore;
-                showMessage(`Challenge set! Beat ${friendScore} to win!`);
-                document.getElementById('challenge-score-input').value = '';
+        function isMobile() {
+            return /Mobi|Android/i.test(navigator.userAgent);
+        }
+
+        function changeTheme() {
+            const theme = document.getElementById('theme-select').value;
+            applyTheme(theme);
+        }
+
+        function applyTheme(theme = document.getElementById('theme-select').value) {
+            const customTheme = document.getElementById('custom-theme');
+            if (customTheme.style.display === 'block') {
+                document.body.style.backgroundColor = document.getElementById('bg-color').value;
+                canvas.style.borderColor = document.getElementById('border-color').value;
+                document.querySelectorAll('button').forEach(btn => btn.style.backgroundColor = document.getElementById('button-color').value);
+                document.querySelectorAll('#menu, #settings-menu, #game-over-menu, #pause-menu, #achievements-menu, #shop-menu, #debug-menu, #tutorial-menu')
+                    .forEach(menu => menu.style.backgroundColor = document.getElementById('menu-color').value);
+                document.querySelectorAll('label, #score, #level, #coins, .shop-item-name').forEach(el => el.style.color = document.getElementById('text-color').value);
             } else {
-                showMessage('Please enter a valid score to challenge!');
+                switch (theme) {
+                    case 'retro':
+                        document.body.style.backgroundColor = '#000000';
+                        canvas.style.borderColor = '#00FF00';
+                        document.querySelectorAll('button').forEach(btn => btn.style.backgroundColor = '#00FF00');
+                        break;
+                    case 'neon':
+                        document.body.style.backgroundColor = '#000033';
+                        canvas.style.borderColor = '#FF00FF';
+                        document.querySelectorAll('button').forEach(btn => btn.style.backgroundColor = '#FF00FF');
+                        break;
+                    default:
+                        document.body.style.backgroundColor = '#000000';
+                        canvas.style.borderColor = '#00FFFF';
+                        document.querySelectorAll('button').forEach(btn => btn.style.backgroundColor = '#00FFFF');
+                }
             }
         }
 
-        // PayPal integration
-        function initPayPalButtons() {
-            if (typeof paypal === 'undefined') {
-                console.error('PayPal SDK not loaded');
-                showMessage('Payment system unavailable. Please try again later.');
-                return;
+        function uploadBackgroundImage() {
+            const file = document.getElementById('bg-image-input').files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    backgroundImage = new Image();
+                    backgroundImage.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
             }
+        }
 
+        function uploadBackgroundMusic() {
+            const file = document.getElementById('bg-music-input').files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    backgroundMusic.src = e.target.result;
+                    backgroundMusic.play();
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function changeMusic() {
+            backgroundMusic.src = document.getElementById('music-select').value;
+            backgroundMusic.play();
+        }
+
+        function uploadSound(type) {
+            const file = document.getElementById(`${type}-sound`).files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    sounds[type].src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function redeemCode() {
+            const code = document.getElementById('code-input').value.toLowerCase();
+            switch (code) {
+                case 'gekyume':
+                    document.getElementById('premium-options').style.display = 'block';
+                    document.getElementById('bg-image-input').disabled = false;
+                    document.getElementById('bg-music-input').disabled = false;
+                    document.getElementById('custom-theme').style.display = 'block';
+                    alert('Premium features unlocked!');
+                    break;
+                case 'philo debug':
+                    debugToggleBtn.style.display = 'block';
+                    alert('Debug menu unlocked!');
+                    break;
+                case 'easteregg':
+                    shipTypes.push({ name: 'secret', value: 'secret', desc: 'Secret Ship - Surprise!' });
+                    updateShipSelect();
+                    alert('Secret ship unlocked!');
+                    break;
+                case '5ship':
+                    for (let i = 0; i < 5; i++) {
+                        shipTypes.push({ name: `random${i}`, value: `random${i}`, desc: `Random Ship ${i}` });
+                    }
+                    updateShipSelect();
+                    alert('5 random ships unlocked!');
+                    break;
+                case '5fonts':
+                    document.getElementById('font-select').innerHTML += `
+                        <option value="Georgia">Georgia</option>
+                        <option value="Verdana">Verdana</option>
+                        <option value="Helvetica">Helvetica</option>
+                    `;
+                    alert('Extra fonts unlocked!');
+                    break;
+                case '5themes':
+                    document.getElementById('theme-select').innerHTML += `
+                        <option value="space">Space</option>
+                        <option value="ocean">Ocean</option>
+                        <option value="forest">Forest</option>
+                    `;
+                    alert('Extra themes unlocked!');
+                    break;
+                case '5games':
+                    document.getElementById('game-mode-select').innerHTML += `
+                        <option value="timeattack">Time Attack</option>
+                        <option value="hardcore">Hardcore</option>
+                    `;
+                    alert('Extra game modes unlocked!');
+                    break;
+                default:
+                    alert('Invalid code!');
+            }
+        }
+
+        function updateShipSelect() {
+            shipSelect.innerHTML = '';
+            pauseShipSelect.innerHTML = '';
+            shipTypes.forEach(ship => {
+                const option = document.createElement('option');
+                option.value = ship.value;
+                option.textContent = ship.desc;
+                shipSelect.appendChild(option);
+                pauseShipSelect.appendChild(option.cloneNode(true));
+            });
+        }
+
+        function changeShip() {
+            player.shipType = shipSelect.value;
+            document.getElementById('pause-ship-select').value = player.shipType;
+        }
+
+        function changeShipFromPause() {
+            player.shipType = document.getElementById('pause-ship-select').value;
+            shipSelect.value = player.shipType;
+        }
+
+        function updateBulletLetter() {
+            customBulletLetter = document.getElementById('bullet-letter-input').value || '•';
+            document.getElementById('pause-bullet-letter-input').value = customBulletLetter;
+        }
+
+        function updateBulletLetterFromPause() {
+            customBulletLetter = document.getElementById('pause-bullet-letter-input').value || '•';
+            document.getElementById('bullet-letter-input').value = customBulletLetter;
+        }
+
+        function changeFont() {
+            document.body.style.fontFamily = document.getElementById('font-select').value;
+        }
+
+        function toggleAIEnemies() {
+            useAIEnemies = document.getElementById('ai-enemies').checked;
+        }
+
+        function changeGameMode() {
+            gameMode = document.getElementById('game-mode-select').value;
+            restartGame();
+        }
+
+        function showMessage(message) {
+            messageDisplay.textContent = message;
+            messageDisplay.style.display = 'block';
+            setTimeout(() => messageDisplay.style.display = 'none', 3000);
+        }
+
+        function spawnGhost() {
+            if (Math.random() < 0.01) {
+                ghosts.push({
+                    x: Math.random() * (canvas.width - 20),
+                    y: -20,
+                    speed: 2
+                });
+            }
+        }
+
+        function dropBomb() {
+            if (player.bombCooldown <= 0) {
+                bullets.push({ x: player.x, y: player.y + player.size / 2, speed: -player.bulletSpeed / 2 });
+                player.bombCooldown = 50;
+            }
+        }
+
+        function activateRadar() {
+            pacmen.forEach(pacman => {
+                pacman.speed *= 0.5;
+                setTimeout(() => pacman.speed *= 2, 5000);
+            });
+        }
+
+        function showAchievements() {
+            menu.style.display = 'none';
+            achievementsMenu.style.display = 'block';
+            const list = document.getElementById('achievements-list');
+            list.innerHTML = '';
+            for (const key in achievements) {
+                const ach = achievements[key];
+                list.innerHTML += `${ach.name}: ${ach.desc} - ${ach.unlocked ? 'Unlocked' : `${ach.count}/${achievementRequirements[key]}`}<br>`;
+            }
+        }
+
+        function backToMenuFromAchievements() {
+            achievementsMenu.style.display = 'none';
+            menu.style.display = 'block';
+        }
+
+        function showShop() {
+            menu.style.display = 'none';
+            shopMenu.style.display = 'block';
+            initPaypalButtons();
+        }
+
+        function backToMenuFromShop() {
+            shopMenu.style.display = 'none';
+            menu.style.display = 'block';
+        }
+
+        function initPaypalButtons() {
             paypal.Buttons({
                 createOrder: (data, actions) => {
                     return actions.order.create({
                         purchase_units: [{
-                            amount: { value: prices.premium.toFixed(2), currency_code: 'GBP' },
-                            description: 'Space Pac-Invaders Premium Upgrade'
+                            amount: { value: prices.premium.toFixed(2) },
+                            description: 'Premium Features for Space Pac-Invaders'
                         }]
                     });
                 },
                 onApprove: (data, actions) => {
-                    return actions.order.capture().then(details => {
-                        isPremium = true;
-                        localStorage.setItem('isPremium', 'true');
-                        bgImageInput.disabled = false;
-                        bgMusicInput.disabled = false;
+                    return actions.order.capture().then(() => {
                         document.getElementById('premium-options').style.display = 'block';
-                        player.fireRate = 15;
-                        player.lives = 3;
-                        updateShipSelect(shipSelect);
-                        updateShipSelect(pauseShipSelect);
-                        showMessage(`Thank you, ${details.payer.name.given_name}! Premium unlocked! Enjoy faster fire rate and extra lives.`);
+                        document.getElementById('bg-image-input').disabled = false;
+                        document.getElementById('bg-music-input').disabled = false;
+                        document.getElementById('custom-theme').style.display = 'block';
+                        alert('Premium features unlocked!');
                     });
-                },
-                onError: (err) => {
-                    console.error('PayPal Premium Purchase Error:', err);
-                    showMessage('Payment failed! Please try again.');
                 }
             }).render('#paypal-premium-container');
 
-            paypal.Buttons({
-                createOrder: (data, actions) => {
-                    return actions.order.create({
-                        purchase_units: [{
-                            amount: { value: prices.ship.toFixed(2), currency_code: 'GBP' },
-                            description: 'Space Pac-Invaders Car Ship'
-                        }]
-                    });
-                },
-                onApprove: (data, actions) => {
-                    return actions.order.capture().then(details => {
-                        if (!ownedShips.includes('car')) {
-                            ownedShips.push('car');
-                            localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
-                            updateShipSelect(shipSelect);
-                            updateShipSelect(pauseShipSelect);
-                            showMessage(`Thank you, ${details.payer.name.given_name}! Car ship purchased!`);
-                        } else {
-                            showMessage('You already own the Car ship!');
-                        }
-                    });
-                },
-                onError: (err) => {
-                    console.error('PayPal Car Purchase Error:', err);
-                    showMessage('Payment failed! Please try again.');
-                }
-            }).render('#paypal-car-container');
-
-            paypal.Buttons({
-                createOrder: (data, actions) => {
-                    return actions.order.create({
-                        purchase_units: [{
-                            amount: { value: prices.ship.toFixed(2), currency_code: 'GBP' },
-                            description: 'Space Pac-Invaders Plane Ship'
-                        }]
-                    });
-                },
-                onApprove: (data, actions) => {
-                    return actions.order.capture().then(details => {
-                        if (!ownedShips.includes('plane')) {
-                            ownedShips.push('plane');
-                            localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
-                            updateShipSelect(shipSelect);
-                            updateShipSelect(pauseShipSelect);
-                            showMessage(`Thank you, ${details.payer.name.given_name}! Plane ship purchased!`);
-                        } else {
-                            showMessage('You already own the Plane ship!');
-                        }
-                    });
-                },
-                onError: (err) => {
-                    console.error('PayPal Plane Purchase Error:', err);
-                    showMessage('Payment failed! Please try again.');
-                }
-            }).render('#paypal-plane-container');
-
-            paypal.Buttons({
-                createOrder: (data, actions) => {
-                    return actions.order.create({
-                        purchase_units: [{
-                            amount: { value: prices.ship.toFixed(2), currency_code: 'GBP' },
-                            description: 'Space Pac-Invaders UFO Ship'
-                        }]
-                    });
-                },
-                onApprove: (data, actions) => {
-                    return actions.order.capture().then(details => {
-                        if (!ownedShips.includes('ufo')) {
-                            ownedShips.push('ufo');
-                            localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
-                            updateShipSelect(shipSelect);
-                            updateShipSelect(pauseShipSelect);
-                            showMessage(`Thank you, ${details.payer.name.given_name}! UFO ship purchased!`);
-                        } else {
-                            showMessage('You already own the UFO ship!');
-                        }
-                    });
-                },
-                onError: (err) => {
-                    console.error('PayPal UFO Purchase Error:', err);
-                    showMessage('Payment failed! Please try again.');
-                }
-            }).render('#paypal-ufo-container');
-
-            paypal.Buttons({
-                createOrder: (data, actions) => {
-                    return actions.order.create({
-                        purchase_units: [{
-                            amount: { value: prices.ship.toFixed(2), currency_code: 'GBP' },
-                            description: 'Space Pac-Invaders Spaceship'
-                        }]
-                    });
-                },
-                onApprove: (data, actions) => {
-                    return actions.order.capture().then(details => {
-                        if (!ownedShips.includes('spaceship')) {
-                            ownedShips.push('spaceship');
-                            localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
-                            updateShipSelect(shipSelect);
-                            updateShipSelect(pauseShipSelect);
-                            showMessage(`Thank you, ${details.payer.name.given_name}! Spaceship purchased!`);
-                        } else {
-                            showMessage('You already own the Spaceship!');
-                        }
-                    });
-                },
-                onError: (err) => {
-                    console.error('PayPal Spaceship Purchase Error:', err);
-                    showMessage('Payment failed! Please try again.');
-                }
-            }).render('#paypal-spaceship-container');
-
-            paypal.Buttons({
-                createOrder: (data, actions) => {
-                    return actions.order.create({
-                        purchase_units: [{
-                            amount: { value: prices.ship.toFixed(2), currency_code: 'GBP' },
-                            description: 'Space Pac-Invaders Tank Ship'
-                        }]
-                    });
-                },
-                onApprove: (data, actions) => {
-                    return actions.order.capture().then(details => {
-                        if (!ownedShips.includes('tank')) {
-                            ownedShips.push('tank');
-                            localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
-                            updateShipSelect(shipSelect);
-                            updateShipSelect(pauseShipSelect);
-                            showMessage(`Thank you, ${details.payer.name.given_name}! Tank ship purchased!`);
-                        } else {
-                            showMessage('You already own the Tank ship!');
-                        }
-                    });
-                },
-                onError: (err) => {
-                    console.error('PayPal Tank Purchase Error:', err);
-                    showMessage('Payment failed! Please try again.');
-                }
-            }).render('#paypal-tank-container');
-
-            paypal.Buttons({
-                createOrder: (data, actions) => {
-                    return actions.order.create({
-                        purchase_units: [{
-                            amount: { value: prices.ship.toFixed(2), currency_code: 'GBP' },
-                            description: 'Space Pac-Invaders Dragon Ship'
-                        }]
-                    });
-                },
-                onApprove: (data, actions) => {
-                    return actions.order.capture().then(details => {
-                        if (!ownedShips.includes('dragon')) {
-                            ownedShips.push('dragon');
-                            localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
-                            updateShipSelect(shipSelect);
-                            updateShipSelect(pauseShipSelect);
-                            showMessage(`Thank you, ${details.payer.name.given_name}! Dragon ship purchased!`);
-                        } else {
-                            showMessage('You already own the Dragon ship!');
-                        }
-                    });
-                },
-                onError: (err) => {
-                    console.error('PayPal Dragon Purchase Error:', err);
-                    showMessage('Payment failed! Please try again.');
-                }
-            }).render('#paypal-dragon-container');
-
-            paypal.Buttons({
-                createOrder: (data, actions) => {
-                    return actions.order.create({
-                        purchase_units: [{
-                            amount: { value: prices.ship.toFixed(2), currency_code: 'GBP' },
-                            description: 'Space Pac-Invaders Cruiser Ship'
-                        }]
-                    });
-                },
-                onApprove: (data, actions) => {
-                    return actions.order.capture().then(details => {
-                        if (!ownedShips.includes('cruiser')) {
-                            ownedShips.push('cruiser');
-                            localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
-                            updateShipSelect(shipSelect);
-                            updateShipSelect(pauseShipSelect);
-                            showMessage(`Thank you, ${details.payer.name.given_name}! Cruiser ship purchased!`);
-                        } else {
-                            showMessage('You already own the Cruiser ship!');
-                        }
-                    });
-                },
-                onError: (err) => {
-                    console.error('PayPal Cruiser Purchase Error:', err);
-                    showMessage('Payment failed! Please try again.');
-                }
-            }).render('#paypal-cruiser-container');
-
-            paypal.Buttons({
-                createOrder: (data, actions) => {
-                    return actions.order.create({
-                        purchase_units: [{
-                            amount: { value: prices.ship.toFixed(2), currency_code: 'GBP' },
-                            description: 'Space Pac-Invaders Bomber Ship'
-                        }]
-                    });
-                },
-                onApprove: (data, actions) => {
-                    return actions.order.capture().then(details => {
-                        if (!ownedShips.includes('bomber')) {
-                            ownedShips.push('bomber');
-                            localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
-                            updateShipSelect(shipSelect);
-                            updateShipSelect(pauseShipSelect);
-                            showMessage(`Thank you, ${details.payer.name.given_name}! Bomber ship purchased!`);
-                        } else {
-                            showMessage('You already own the Bomber ship!');
-                        }
-                    });
-                },
-                onError: (err) => {
-                    console.error('PayPal Bomber Purchase Error:', err);
-                    showMessage('Payment failed! Please try again.');
-                }
-            }).render('#paypal-bomber-container');
-
-            paypal.Buttons({
-                createOrder: (data, actions) => {
-                    return actions.order.create({
-                        purchase_units: [{
-                            amount: { value: prices.ship.toFixed(2), currency_code: 'GBP' },
-                            description: 'Space Pac-Invaders Pirate Ship'
-                        }]
-                    });
-                },
-                onApprove: (data, actions) => {
-                    return actions.order.capture().then(details => {
-                        if (!ownedShips.includes('pirate')) {
-                            ownedShips.push('pirate');
-                            localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
-                            updateShipSelect(shipSelect);
-                            updateShipSelect(pauseShipSelect);
-                            showMessage(`Thank you, ${details.payer.name.given_name}! Pirate ship purchased!`);
-                        } else {
-                            showMessage('You already own the Pirate ship!');
-                        }
-                    });
-                },
-                onError: (err) => {
-                    console.error('PayPal Pirate Purchase Error:', err);
-                    showMessage('Payment failed! Please try again.');
-                }
-            }).render('#paypal-pirate-container');
-
-            paypal.Buttons({
-                createOrder: (data, actions) => {
-                    return actions.order.create({
-                        purchase_units: [{
-                            amount: { value: prices.random.toFixed(2), currency_code: 'GBP' },
-                            description: 'Space Pac-Invaders Random AI Ship'
-                        }]
-                    });
-                },
-                onApprove: (data, actions) => {
-                    return actions.order.capture().then(details => {
-                        const newShip = generateUniqueShipName();
-                        ownedShips.push(newShip);
-                        localStorage.setItem('ownedShips', JSON.stringify(ownedShips));
-                        updateShipSelect(shipSelect);
-                        updateShipSelect(pauseShipSelect);
-                        showMessage(`Thank you, ${details.payer.name.given_name}! You got a unique AI ship: ${newShip}!`);
-                    });
-                },
-                onError: (err) => {
-                    console.error('PayPal Random Ship Purchase Error:', err);
-                    showMessage('Payment failed! Please try again.');
-                }
-            }).render('#paypal-random-container');
-
-            paypal.Buttons({
-                createOrder: (data, actions) => {
-                    return actions.order.create({
-                        purchase_units: [{
-                            amount: { value: prices.speedboost.toFixed(2), currency_code: 'GBP' },
-                            description: 'Space Pac-Invaders Speed Boost'
-                        }]
-                    });
-                },
-                onApprove: (data, actions) => {
-                    return actions.order.capture().then(details => {
-                        if (!player.speedBoost) {
-                            player.speedBoost = true;
-                            localStorage.setItem('speedBoost', 'true');
-                            player.speed = 10;
-                            showMessage(`Thank you, ${details.payer.name.given_name}! Speed Boost purchased! Your speed is now doubled.`);
-                        } else {
-                            showMessage('You already have the Speed Boost!');
-                        }
-                    });
-                },
-                onError: (err) => {
-                    console.error('PayPal Speed Boost Purchase Error:', err);
-                    showMessage('Payment failed! Please try again.');
-                }
-            }).render('#paypal-speedboost-container');
-
-            paypal.Buttons({
-                createOrder: (data, actions) => {
-                    return actions.order.create({
-                        purchase_units: [{
-                            amount: { value: prices.shieldpack.toFixed(2), currency_code: 'GBP' },
-                            description: 'Space Pac-Invaders Shield Pack'
-                        }]
-                    });
-                },
-                onApprove: (data, actions) => {
-                    return actions.order.capture().then(details => {
-                        if (!player.shieldPack) {
-                            player.shieldPack = true;
-                            localStorage.setItem('shieldPack', 'true');
-                            player.shield = 200;
-                            showMessage(`Thank you, ${details.payer.name.given_name}! Shield Pack purchased! Your shield is now doubled.`);
-                        } else {
-                            showMessage('You already have the Shield Pack!');
-                        }
-                    });
-                },
-                onError: (err) => {
-                    console.error('PayPal Shield Pack Purchase Error:', err);
-                    showMessage('Payment failed! Please try again.');
-                }
-            }).render('#paypal-shieldpack-container');
+            const shipContainers = ['car', 'plane', 'ufo', 'spaceship', 'tank', 'dragon', 'cruiser', 'bomber', 'pirate', 'random', 'speedboost', 'shieldpack'];
+            shipContainers.forEach(item => {
+                paypal.Buttons({
+                    createOrder: (data, actions) => {
+                        const price = item === 'random' ? prices.random : item === 'speedboost' ? prices.speedboost : item === 'shieldpack' ? prices.shieldpack : prices.ship;
+                        return actions.order.create({
+                            purchase_units: [{
+                                amount: { value: price.toFixed(2) },
+                                description: `${item.charAt(0).toUpperCase() + item.slice(1)} for Space Pac-Invaders`
+                            }]
+                        });
+                    },
+                    onApprove: (data, actions) => {
+                        return actions.order.capture().then(() => {
+                            if (item === 'speedboost') {
+                                player.speed *= 2;
+                                alert('Speed Boost purchased!');
+                            } else if (item === 'shieldpack') {
+                                player.shield = 200;
+                                alert('Shield Pack purchased!');
+                            } else {
+                                shipTypes.push({ name: item, value: item, desc: `${item.charAt(0).toUpperCase() + item.slice(1)} Ship` });
+                                updateShipSelect();
+                                alert(`${item.charAt(0).toUpperCase() + item.slice(1)} purchased!`);
+                            }
+                        });
+                    }
+                }).render(`#paypal-${item}-container`);
+            });
         }
 
-        // Initialize game
-        loadSettings();
-        initPayPalButtons();
+        function toggleDebugMenu() {
+            debugMenu.style.display = debugMenu.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function debugAddScore(amount) {
+            score += amount;
+            scoreDisplay.textContent = `Score: ${score}`;
+        }
+
+        function debugNextLevel() {
+            level++;
+            initLevel();
+            levelDisplay.textContent = `Level: ${level}`;
+        }
+
+        function debugSpawnUpgrade() {
+            const types = ['gun', 'ship', 'shield', 'speed', 'multi'];
+            upgrades.push({
+                x: Math.random() * (canvas.width - 20),
+                y: -20,
+                size: 20,
+                speed: 2,
+                type: types[Math.floor(Math.random() * types.length)]
+            });
+        }
+
+        function debugToggleInvincibility() {
+            isInvincible = !isInvincible;
+            showMessage(`Invincibility: ${isInvincible ? 'ON' : 'OFF'}`);
+        }
+
+        function debugResetGame() {
+            restartGame();
+        }
+
+        function debugMaxBullets() {
+            player.bulletCount = 5;
+        }
+
+        function debugMaxSpeed() {
+            player.speed = 10;
+        }
+
+        function debugInfiniteShield() {
+            player.shield = Infinity;
+        }
+
+        function debugKillAllPacmen() {
+            pacmen = [];
+        }
+
+        function debugSpawnGhosts(count) {
+            for (let i = 0; i < count; i++) {
+                ghosts.push({
+                    x: Math.random() * (canvas.width - 20),
+                    y: -20,
+                    speed: 2
+                });
+            }
+        }
+
+        function debugIncreaseFireRate() {
+            player.fireRate = Math.max(5, player.fireRate - 5);
+        }
+
+        function debugUnlockAllShips() {
+            shipTypes.forEach(ship => {
+                if (!shipSelect.querySelector(`option[value="${ship.value}"]`)) {
+                    const option = document.createElement('option');
+                    option.value = ship.value;
+                    option.textContent = ship.desc;
+                    shipSelect.appendChild(option);
+                    pauseShipSelect.appendChild(option.cloneNode(true));
+                }
+            });
+        }
+
+        function debugDoubleSize() {
+            player.size *= 2;
+        }
+
+        function debugHalfSize() {
+            player.size /= 2;
+        }
+
+        function debugInstantLevel10() {
+            level = 10;
+            initLevel();
+            levelDisplay.textContent = `Level: ${level}`;
+        }
+
+        function debugSlowEnemies() {
+            pacmen.forEach(p => p.speed /= 2);
+            bosses.forEach(b => b.speed /= 2);
+        }
+
+        function debugFastEnemies() {
+            pacmen.forEach(p => p.speed *= 2);
+            bosses.forEach(b => b.speed *= 2);
+        }
+
+        function debugExtraLives(count) {
+            player.lives += count;
+        }
+
+        function debugUnlockAchievements() {
+            for (const key in achievements) {
+                achievements[key].unlocked = true;
+                achievements[key].count = achievementRequirements[key];
+            }
+            showMessage('All achievements unlocked!');
+        }
+
+        function debugAddCoins(amount) {
+            player.coins += amount;
+            coinsDisplay.textContent = `Coins: ${player.coins}`;
+        }
+
+        function showRules() {
+            const rulesSection = document.getElementById('rules-section');
+            rulesSection.style.display = 'block';
+            rulesSection.innerHTML = `
+                <h3>Game Rules</h3>
+                - Use arrow keys (PC) or joystick (mobile) to move.<br>
+                - Spacebar (PC) or shoot button (mobile) to fire.<br>
+                - Avoid Pac-Men and Bosses, or lose lives.<br>
+                - Collect upgrades (colored boxes) for power-ups.<br>
+                - Ghosts give bonus points and coins.<br>
+                - Classic Mode: Clear levels to advance.<br>
+                - Endless Mode: Survive endless waves.<br>
+                - Survival Mode: Increasing difficulty over time.<br>
+                - Earn coins to buy ships and upgrades in the shop.
+            `;
+        }
+
+        function showTutorial() {
+            menu.style.display = 'none';
+            tutorialMenu.style.display = 'block';
+            document.getElementById('tutorial-content').innerHTML = `
+                <h3>Tutorial</h3>
+                1. <strong>Start:</strong> Enter your name and click "Start Game".<br>
+                2. <strong>Move:</strong> Arrow keys (PC) or joystick (mobile).<br>
+                3. <strong>Shoot:</strong> Spacebar (PC) or shoot button (mobile).<br>
+                4. <strong>Objective:</strong> Destroy Pac-Men and Bosses, avoid collisions.<br>
+                5. <strong>Upgrades:</strong> Collect boxes for power-ups (e.g., more bullets, speed).<br>
+                6. <strong>Shop:</strong> Use coins to buy ships with unique abilities.<br>
+                7. <strong>Achievements:</strong> Unlock by completing challenges.<br>
+                8. <strong>Pause:</strong> ESC key (PC) or pause button (top center).
+            `;
+        }
+
+        function backToMenuFromTutorial() {
+            tutorialMenu.style.display = 'none';
+            menu.style.display = 'block';
+        }
+
+        function savePrices() {
+            prices.premium = parseFloat(document.getElementById('price-premium').value) || prices.premium;
+            prices.ship = parseFloat(document.getElementById('price-ship').value) || prices.ship;
+            prices.random = parseFloat(document.getElementById('price-random').value) || prices.random;
+            prices.speedboost = parseFloat(document.getElementById('price-speedboost').value) || prices.speedboost;
+            prices.shieldpack = parseFloat(document.getElementById('price-shieldpack').value) || prices.shieldpack;
+            alert('Prices updated!');
+        }
+
+        // Load saved settings
+        const savedName = localStorage.getItem('playerName');
+        if (savedName) document.getElementById('player-name').value = savedName;
+
     </script>
 </body>
 </html>
