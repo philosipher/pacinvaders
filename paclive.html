@@ -599,8 +599,10 @@
         let upgrades = [];
         let explosions = [];
         let ghosts = [];
+        let fireworks = []; // For victory event
         let score = 0;
         let level = 1;
+        let maxLevel = 50; // 50 levels before victory
         let gameOver = false;
         let isShooting = false;
         let isPaused = false;
@@ -614,6 +616,7 @@
         let gameMode = 'classic';
         let challengeScore = 0;
         let customBulletLetter = '•';
+        let gameCompleted = false;
         backgroundMusic.loop = true;
 
         // Sound Effects
@@ -629,14 +632,14 @@
         const achievements = {
             pacmanSlayer: { name: 'Pac-Man Slayer', desc: 'Defeat 50 Pac-Men', count: 0, unlocked: false },
             bossBuster: { name: 'Boss Buster', desc: 'Defeat 5 Bosses', count: 0, unlocked: false },
-            levelMaster: { name: 'Level Master', desc: 'Reach Level 10', count: 0, unlocked: false },
+            levelMaster: { name: 'Level Master', desc: 'Reach Level 50', count: 0, unlocked: false },
             coinCollector: { name: 'Coin Collector', desc: 'Collect 500 Coins', count: 0, unlocked: false },
             ghostHunter: { name: 'Ghost Hunter', desc: 'Collect 25 Ghosts', count: 0, unlocked: false }
         };
         const achievementRequirements = {
             pacmanSlayer: 50,
             bossBuster: 5,
-            levelMaster: 10,
+            levelMaster: 50,
             coinCollector: 500,
             ghostHunter: 25
         };
@@ -664,6 +667,20 @@
             speedboost: 2.00,
             shieldpack: 3.00
         };
+
+        // Boss Types (10 unique types, cycled every 10 levels with scaling stats)
+        const bossTemplates = [
+            { type: 'basic', baseHealth: 10, speed: 2, size: 80, attack: 'none', color: '#FF4500' },
+            { type: 'shooter', baseHealth: 15, speed: 2.5, size: 90, attack: 'shoot', color: '#FF00FF', shootCooldown: 50 },
+            { type: 'spawner', baseHealth: 20, speed: 1.5, size: 100, attack: 'spawn', color: '#00FF00', spawnCooldown: 100 },
+            { type: 'dasher', baseHealth: 25, speed: 4, size: 70, attack: 'dash', color: '#FFFF00', dashCooldown: 80 },
+            { type: 'tank', baseHealth: 40, speed: 1, size: 120, attack: 'none', color: '#666666', armor: true },
+            { type: 'laser', baseHealth: 30, speed: 2, size: 90, attack: 'laser', color: '#00FFFF', laserCooldown: 120 },
+            { type: 'splitter', baseHealth: 35, speed: 2.5, size: 110, attack: 'split', color: '#FF69B4', splitCooldown: 150 },
+            { type: 'ghost', baseHealth: 25, speed: 3, size: 80, attack: 'ghostSpawn', color: '#FF0000', ghostCooldown: 90 },
+            { type: 'bomber', baseHealth: 30, speed: 2, size: 100, attack: 'bomb', color: '#8B4513', bombCooldown: 60 },
+            { type: 'mega', baseHealth: 50, speed: 1.5, size: 130, attack: 'multi', color: '#FFD700', multiCooldown: 40 }
+        ];
 
         // Initialize Ship Selection
         const shipSelect = document.getElementById('ship-select');
@@ -771,33 +788,60 @@
             upgrades = [];
             explosions = [];
             ghosts = [];
-            for (let i = 0; i < 5 + level; i++) {
+            fireworks = [];
+            gameCompleted = false;
+
+            // Spawn Pac-Men based on level
+            const pacmanCount = Math.min(5 + Math.floor(level / 2), 20); // Caps at 20 Pac-Men
+            for (let i = 0; i < pacmanCount; i++) {
                 pacmen.push({
                     x: Math.random() * (canvas.width - 40),
                     y: -40,
                     size: 40,
-                    speed: 1 + level * 0.5,
+                    speed: 1 + level * 0.2,
                     mouthAngle: 0,
                     mouthSpeed: 0.05,
                     spinAngle: 0,
-                    health: 1,
+                    health: 1 + Math.floor(level / 10),
                     isAI: useAIEnemies && Math.random() < 0.5,
                     targetX: player.x,
                     targetY: player.y
                 });
             }
-            if (level % 5 === 0) {
-                bosses.push({
-                    x: canvas.width / 2 - 50,
-                    y: -100,
-                    size: 100,
-                    speed: 1 + level * 0.2,
-                    health: 10 + level * 2
-                });
-            }
+
             scoreDisplay.textContent = `Score: ${score}`;
             levelDisplay.textContent = `Level: ${level}`;
             coinsDisplay.textContent = `Coins: ${player.coins}`;
+        }
+
+        function spawnBoss() {
+            const bossIndex = (level - 1) % 10; // Cycle through 10 boss types
+            const difficultyMultiplier = Math.floor((level - 1) / 10) + 1; // Increase stats every 10 levels
+            const template = bossTemplates[bossIndex];
+            bosses.push({
+                x: canvas.width / 2 - template.size / 2,
+                y: -template.size,
+                size: template.size,
+                speed: template.speed + difficultyMultiplier * 0.5,
+                health: template.baseHealth * difficultyMultiplier,
+                type: template.type,
+                attack: template.attack,
+                color: template.color,
+                shootCooldown: template.shootCooldown || 0,
+                spawnCooldown: template.spawnCooldown || 0,
+                dashCooldown: template.dashCooldown || 0,
+                laserCooldown: template.laserCooldown || 0,
+                splitCooldown: template.splitCooldown || 0,
+                ghostCooldown: template.ghostCooldown || 0,
+                bombCooldown: template.bombCooldown || 0,
+                multiCooldown: template.multiCooldown || 0,
+                armor: template.armor || false,
+                isDashing: false,
+                dashTargetX: 0,
+                dashTargetY: 0,
+                laserActive: false,
+                splitCount: 0
+            });
         }
 
         function shoot() {
@@ -822,18 +866,19 @@
         function update() {
             if (gameOver || isPaused) return;
 
+            // Player movement
             player.x += player.dx;
             player.y += player.dy;
             player.x = Math.max(player.size / 2, Math.min(canvas.width - player.size / 2, player.x));
             player.y = Math.max(player.size / 2, Math.min(canvas.height - player.size / 2, player.y));
 
+            // Animation updates
             player.wheelAngle += 0.1;
             player.propellerAngle += 0.2;
             player.lightAngle += 0.05;
             player.flameOffset = Math.sin(player.frameCount * 0.1) * 5;
             player.flapAngle = Math.sin(player.frameCount * 0.1) * 0.2;
             if (player.bombCooldown > 0) player.bombCooldown--;
-
             if (player.shootCooldown > 0) player.shootCooldown--;
             if (isShooting) {
                 shoot();
@@ -847,6 +892,7 @@
             const pacmenToRemove = [];
             const bossesToRemove = [];
 
+            // Bullet updates
             bullets.forEach((bullet, bIndex) => {
                 bullet.y -= bullet.speed;
                 if (bullet.y < 0) bulletsToRemove.push(bIndex);
@@ -865,32 +911,10 @@
                             player.coins += 10;
                             achievements.pacmanSlayer.count++;
                             achievements.coinCollector.count += 10;
-                            if (achievements.pacmanSlayer.count >= achievementRequirements.pacmanSlayer && !achievements.pacmanSlayer.unlocked) {
-                                achievements.pacmanSlayer.unlocked = true;
-                                showMessage('Achievement Unlocked: Pac-Man Slayer!');
-                            }
-                            if (achievements.coinCollector.count >= achievementRequirements.coinCollector && !achievements.coinCollector.unlocked) {
-                                achievements.coinCollector.unlocked = true;
-                                showMessage('Achievement Unlocked: Coin Collector!');
-                            }
+                            checkAchievements();
                             scoreDisplay.textContent = `Score: ${score}`;
                             coinsDisplay.textContent = `Coins: ${player.coins}`;
                             playSound('enemyHit');
-                            if (gameMode === 'endless') {
-                                pacmen.push({
-                                    x: Math.random() * (canvas.width - 40),
-                                    y: -40,
-                                    size: 40,
-                                    speed: 1 + level * 0.5,
-                                    mouthAngle: 0,
-                                    mouthSpeed: 0.05,
-                                    spinAngle: 0,
-                                    health: 1,
-                                    isAI: useAIEnemies && Math.random() < 0.5,
-                                    targetX: player.x,
-                                    targetY: player.y
-                                });
-                            }
                         }
                     }
                 });
@@ -898,7 +922,7 @@
                 bosses.forEach((boss, bIndex) => {
                     if (bullet.x > boss.x && bullet.x < boss.x + boss.size &&
                         bullet.y > boss.y && bullet.y < boss.y + boss.size) {
-                        boss.health--;
+                        boss.health -= boss.armor ? 0.5 : 1;
                         bulletsToRemove.push(bIndex);
                         if (boss.health <= 0) {
                             explosions.push({ x: boss.x + boss.size / 2, y: boss.y + boss.size / 2, size: 50, opacity: 1 });
@@ -906,22 +930,30 @@
                             score += 500;
                             player.coins += 100;
                             achievements.bossBuster.count++;
-                            if (achievements.bossBuster.count >= achievementRequirements.bossBuster && !achievements.bossBuster.unlocked) {
-                                achievements.bossBuster.unlocked = true;
-                                showMessage('Achievement Unlocked: Boss Buster!');
-                            }
+                            checkAchievements();
                             scoreDisplay.textContent = `Score: ${score}`;
                             coinsDisplay.textContent = `Coins: ${player.coins}`;
                             playSound('enemyHit');
+                            if (level <= maxLevel) {
+                                level++;
+                                if (level > maxLevel) {
+                                    triggerVictory();
+                                } else {
+                                    initLevel();
+                                    levelDisplay.textContent = `Level: ${level}`;
+                                }
+                            }
                         }
                     }
                 });
             });
 
+            // Remove entities
             bulletsToRemove.sort((a, b) => b - a).forEach(index => bullets.splice(index, 1));
             pacmenToRemove.sort((a, b) => b - a).forEach(index => pacmen.splice(index, 1));
             bossesToRemove.sort((a, b) => b - a).forEach(index => bosses.splice(index, 1));
 
+            // Pac-Men updates
             pacmen.forEach(pacman => {
                 if (pacman.isAI) {
                     const dx = pacman.targetX - pacman.x;
@@ -937,114 +969,174 @@
                     pacman.y += pacman.speed;
                 }
                 if (pacman.y > canvas.height) {
-                    if (gameMode === 'endless') {
-                        pacman.y = -pacman.size;
-                        pacman.x = Math.random() * (canvas.width - pacman.size);
-                    } else {
-                        pacman.y = -pacman.size;
-                        pacman.x = Math.random() * (canvas.width - pacman.size);
-                    }
+                    pacman.y = -pacman.size;
+                    pacman.x = Math.random() * (canvas.width - pacman.size);
                 }
-                if (!isInvincible && Math.abs(pacman.x - player.x) < (pacman.size + player.size) / 2 &&
-                    Math.abs(pacman.y - player.y) < (pacman.size + player.size) / 2) {
-                    if (player.shield <= 0) {
-                        player.lives--;
-                        if (player.lives <= 0) {
-                            gameOver = true;
-                            playSound('death');
-                            finalScore.textContent = `Score: ${score}`;
-                            gameOverMenu.style.display = 'block';
-                            gameOverMenu.style.opacity = '0';
-                            setTimeout(() => gameOverMenu.style.opacity = '1', 10);
-                        } else {
-                            pacman.y = -pacman.size;
-                            showMessage(`Lives remaining: ${player.lives}`);
-                        }
-                    } else {
-                        pacman.y = -pacman.size;
-                    }
-                }
+                checkCollision(pacman);
             });
 
+            // Boss updates
             bosses.forEach(boss => {
                 boss.y += boss.speed;
                 if (boss.y > canvas.height) {
                     boss.y = -boss.size;
                     boss.x = Math.random() * (canvas.width - boss.size);
                 }
-                if (!isInvincible && Math.abs(boss.x + boss.size / 2 - player.x) < (boss.size + player.size) / 2 &&
-                    Math.abs(boss.y + boss.size / 2 - player.y) < (boss.size + player.size) / 2) {
-                    if (player.shield <= 0) {
-                        player.lives -= 2;
-                        if (player.lives <= 0) {
-                            gameOver = true;
-                            playSound('death');
-                            finalScore.textContent = `Score: ${score}`;
-                            gameOverMenu.style.display = 'block';
-                            gameOverMenu.style.opacity = '0';
-                            setTimeout(() => gameOverMenu.style.opacity = '1', 10);
-                        } else {
-                            boss.y = -boss.size;
-                            showMessage(`Lives remaining: ${player.lives}`);
+                checkCollision(boss);
+
+                // Boss attacks
+                switch (boss.attack) {
+                    case 'shoot':
+                        if (boss.shootCooldown <= 0) {
+                            bullets.push({ x: boss.x + boss.size / 2, y: boss.y + boss.size, speed: -5, isEnemy: true });
+                            boss.shootCooldown = bossTemplates[(level - 1) % 10].shootCooldown;
                         }
-                    } else {
-                        boss.y = -boss.size;
+                        boss.shootCooldown--;
+                        break;
+                    case 'spawn':
+                        if (boss.spawnCooldown <= 0) {
+                            pacmen.push({
+                                x: boss.x + boss.size / 2 - 20,
+                                y: boss.y + boss.size,
+                                size: 40,
+                                speed: 2,
+                                mouthAngle: 0,
+                                mouthSpeed: 0.05,
+                                spinAngle: 0,
+                                health: 1,
+                                isAI: false
+                            });
+                            boss.spawnCooldown = bossTemplates[(level - 1) % 10].spawnCooldown;
+                        }
+                        boss.spawnCooldown--;
+                        break;
+                    case 'dash':
+                        if (boss.dashCooldown <= 0) {
+                            boss.isDashing = true;
+                            boss.dashTargetX = player.x;
+                            boss.dashTargetY = player.y;
+                            boss.speed *= 3;
+                            boss.dashCooldown = bossTemplates[(level - 1) % 10].dashCooldown;
+                            setTimeout(() => {
+                                boss.isDashing = false;
+                                boss.speed /= 3;
+                            }, 1000);
+                        }
+                        if (boss.isDashing) {
+                            const dx = boss.dashTargetX - boss.x;
+                            const dy = boss.dashTargetY - boss.y;
+                            const distance = Math.sqrt(dx * dx + dy * dy);
+                            if (distance > 5) {
+                                boss.x += (dx / distance) * boss.speed;
+                                boss.y += (dy / distance) * boss.speed;
+                            }
+                        }
+                        boss.dashCooldown--;
+                        break;
+                    case 'laser':
+                        if (boss.laserCooldown <= 0) {
+                            boss.laserActive = true;
+                            setTimeout(() => boss.laserActive = false, 2000);
+                            boss.laserCooldown = bossTemplates[(level - 1) % 10].laserCooldown;
+                        }
+                        if (boss.laserActive && Math.abs(boss.x + boss.size / 2 - player.x) < 20 && boss.y < player.y) {
+                            damagePlayer(2);
+                        }
+                        boss.laserCooldown--;
+                        break;
+                    case 'split':
+                        if (boss.splitCooldown <= 0 && boss.splitCount < 2) {
+                            bosses.push({
+                                x: boss.x - boss.size / 2,
+                                y: boss.y,
+                                size: boss.size / 2,
+                                speed: boss.speed,
+                                health: boss.health / 2,
+                                type: boss.type,
+                                attack: 'none',
+                                color: boss.color
+                            });
+                            bosses.push({
+                                x: boss.x + boss.size / 2,
+                                y: boss.y,
+                                size: boss.size / 2,
+                                speed: boss.speed,
+                                health: boss.health / 2,
+                                type: boss.type,
+                                attack: 'none',
+                                color: boss.color
+                            });
+                            boss.splitCount++;
+                            boss.splitCooldown = bossTemplates[(level - 1) % 10].splitCooldown;
+                        }
+                        boss.splitCooldown--;
+                        break;
+                    case 'ghostSpawn':
+                        if (boss.ghostCooldown <= 0) {
+                            ghosts.push({
+                                x: boss.x + boss.size / 2 - 10,
+                                y: boss.y + boss.size,
+                                speed: 3
+                            });
+                            boss.ghostCooldown = bossTemplates[(level - 1) % 10].ghostCooldown;
+                        }
+                        boss.ghostCooldown--;
+                        break;
+                    case 'bomb':
+                        if (boss.bombCooldown <= 0) {
+                            bullets.push({ x: boss.x + boss.size / 2, y: boss.y + boss.size, speed: -3, isEnemy: true, isBomb: true });
+                            boss.bombCooldown = bossTemplates[(level - 1) % 10].bombCooldown;
+                        }
+                        boss.bombCooldown--;
+                        break;
+                    case 'multi':
+                        if (boss.multiCooldown <= 0) {
+                            bullets.push({ x: boss.x + boss.size / 4, y: boss.y + boss.size, speed: -5, isEnemy: true });
+                            bullets.push({ x: boss.x + boss.size * 3 / 4, y: boss.y + boss.size, speed: -5, isEnemy: true });
+                            boss.multiCooldown = bossTemplates[(level - 1) % 10].multiCooldown;
+                        }
+                        boss.multiCooldown--;
+                        break;
+                }
+            });
+
+            // Enemy bullets
+            bullets.forEach((bullet, bIndex) => {
+                if (bullet.isEnemy) {
+                    bullet.y += Math.abs(bullet.speed);
+                    if (bullet.y > canvas.height) bulletsToRemove.push(bIndex);
+                    if (Math.abs(bullet.x - player.x) < player.size / 2 && Math.abs(bullet.y - player.y) < player.size / 2) {
+                        damagePlayer(bullet.isBomb ? 2 : 1);
+                        bulletsToRemove.push(bIndex);
                     }
                 }
             });
 
             if (player.shield > 0) player.shield--;
 
+            // Upgrades
             upgrades.forEach((upgrade, uIndex) => {
                 upgrade.y += upgrade.speed;
                 if (upgrade.y > canvas.height) {
                     upgrades.splice(uIndex, 1);
-                } else if (Math.abs(upgrade.x + upgrade.size / 2 - player.x) < (upgrade.size + player.size) / 2 &&
-                           Math.abs(upgrade.y + upgrade.size / 2 - player.y) < (upgrade.size + player.size) / 2) {
+                } else if (checkCollision(upgrade, false)) {
                     playSound('upgrade');
-                    switch (upgrade.type) {
-                        case 'gun':
-                            if (player.bulletCount < 3) player.bulletCount++;
-                            else if (player.fireRate > 5) player.fireRate -= 5;
-                            else player.bulletSpeed += 2;
-                            break;
-                        case 'ship':
-                            player.shipLevel = Math.min(player.shipLevel + 1, 2);
-                            break;
-                        case 'shield':
-                            player.shield = 100;
-                            break;
-                        case 'speed':
-                            player.speed += 2;
-                            setTimeout(() => player.speed -= 2, 10000);
-                            break;
-                        case 'multi':
-                            player.bulletCount = 5;
-                            setTimeout(() => player.bulletCount = 1, 10000);
-                            break;
-                    }
+                    applyUpgrade(upgrade.type);
                     upgrades.splice(uIndex, 1);
                 }
             });
 
+            // Ghosts
             ghosts.forEach((ghost, index) => {
                 ghost.y += ghost.speed;
                 if (ghost.y > canvas.height) {
                     ghosts.splice(index, 1);
-                } else if (Math.abs(ghost.x + 10 - player.x) < (player.size / 2 + 10) &&
-                           Math.abs(ghost.y + 10 - player.y) < (player.size / 2 + 10)) {
+                } else if (checkCollision(ghost, false)) {
                     score += 50;
                     player.coins += 5;
                     achievements.ghostHunter.count++;
                     achievements.coinCollector.count += 5;
-                    if (achievements.ghostHunter.count >= achievementRequirements.ghostHunter && !achievements.ghostHunter.unlocked) {
-                        achievements.ghostHunter.unlocked = true;
-                        showMessage('Achievement Unlocked: Ghost Hunter!');
-                    }
-                    if (achievements.coinCollector.count >= achievementRequirements.coinCollector && !achievements.coinCollector.unlocked) {
-                        achievements.coinCollector.unlocked = true;
-                        showMessage('Achievement Unlocked: Coin Collector!');
-                    }
+                    checkAchievements();
                     scoreDisplay.textContent = `Score: ${score}`;
                     coinsDisplay.textContent = `Coins: ${player.coins}`;
                     playSound('waka');
@@ -1052,41 +1144,32 @@
                 }
             });
 
-            if (gameMode === 'classic' && pacmen.length === 0 && bosses.length === 0) {
-                level++;
-                player.coins += 50;
-                achievements.levelMaster.count++;
-                achievements.coinCollector.count += 50;
-                if (achievements.levelMaster.count >= achievementRequirements.levelMaster && !achievements.levelMaster.unlocked) {
-                    achievements.levelMaster.unlocked = true;
-                    showMessage('Achievement Unlocked: Level Master!');
+            // Fireworks for victory
+            if (gameCompleted) {
+                if (Math.random() < 0.1) {
+                    fireworks.push({
+                        x: Math.random() * canvas.width,
+                        y: Math.random() * canvas.height / 2,
+                        size: 5,
+                        speed: 3,
+                        color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+                        life: 60
+                    });
                 }
-                if (achievements.coinCollector.count >= achievementRequirements.coinCollector && !achievements.coinCollector.unlocked) {
-                    achievements.coinCollector.unlocked = true;
-                    showMessage('Achievement Unlocked: Coin Collector!');
-                }
-                initLevel();
-                levelDisplay.textContent = `Level: ${level}`;
-                coinsDisplay.textContent = `Coins: ${player.coins}`;
-            } else if (gameMode === 'survival' && Math.random() < 0.05) {
-                pacmen.push({
-                    x: Math.random() * (canvas.width - 40),
-                    y: -40,
-                    size: 40,
-                    speed: 2 + level * 0.5,
-                    mouthAngle: 0,
-                    mouthSpeed: 0.05,
-                    spinAngle: 0,
-                    health: 1,
-                    isAI: useAIEnemies && Math.random() < 0.5,
-                    targetX: player.x,
-                    targetY: player.y
+                fireworks.forEach((fw, index) => {
+                    fw.y -= fw.speed;
+                    fw.size += 0.5;
+                    fw.life--;
+                    if (fw.life <= 0) {
+                        explosions.push({ x: fw.x, y: fw.y, size: 20, opacity: 1 });
+                        fireworks.splice(index, 1);
+                    }
                 });
             }
 
-            if (score > challengeScore && challengeScore > 0) {
-                showMessage('You beat your friend\'s score!');
-                challengeScore = 0;
+            // Level progression
+            if (pacmen.length === 0 && bosses.length === 0 && level <= maxLevel && !gameCompleted) {
+                spawnBoss();
             }
         }
 
@@ -1098,10 +1181,16 @@
 
             drawPlayer();
             bullets.forEach(bullet => {
-                ctx.fillStyle = document.getElementById('bullet-color')?.value || '#FF00FF';
-                ctx.font = '20px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText(customBulletLetter, bullet.x, bullet.y);
+                ctx.fillStyle = bullet.isEnemy ? '#FF0000' : (document.getElementById('bullet-color')?.value || '#FF00FF');
+                if (bullet.isBomb) {
+                    ctx.beginPath();
+                    ctx.arc(bullet.x, bullet.y, 10, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    ctx.font = '20px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(bullet.isEnemy ? '!' : customBulletLetter, bullet.x, bullet.y);
+                }
             });
             pacmen.forEach(pacman => {
                 pacman.mouthAngle += pacman.mouthSpeed;
@@ -1118,10 +1207,76 @@
                 ctx.restore();
             });
             bosses.forEach(boss => {
-                ctx.fillStyle = '#FF4500';
-                ctx.fillRect(boss.x, boss.y, boss.size, boss.size);
-                ctx.fillStyle = '#FFFFFF';
-                ctx.fillRect(boss.x + 10, boss.y + 10, boss.size - 20, 20);
+                ctx.fillStyle = boss.color;
+                switch (boss.type) {
+                    case 'basic':
+                        ctx.fillRect(boss.x, boss.y, boss.size, boss.size);
+                        break;
+                    case 'shooter':
+                        ctx.beginPath();
+                        ctx.arc(boss.x + boss.size / 2, boss.y + boss.size / 2, boss.size / 2, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.fillRect(boss.x + boss.size / 2 - 5, boss.y + boss.size, 10, 20);
+                        break;
+                    case 'spawner':
+                        ctx.fillRect(boss.x, boss.y, boss.size, boss.size);
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.beginPath();
+                        ctx.arc(boss.x + boss.size / 2, boss.y + boss.size / 2, 20, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                    case 'dasher':
+                        ctx.beginPath();
+                        ctx.moveTo(boss.x + boss.size / 2, boss.y);
+                        ctx.lineTo(boss.x, boss.y + boss.size);
+                        ctx.lineTo(boss.x + boss.size, boss.y + boss.size);
+                        ctx.fill();
+                        break;
+                    case 'tank':
+                        ctx.fillRect(boss.x, boss.y, boss.size, boss.size);
+                        ctx.fillStyle = '#333333';
+                        ctx.fillRect(boss.x + boss.size / 4, boss.y - 20, boss.size / 2, 20);
+                        break;
+                    case 'laser':
+                        ctx.beginPath();
+                        ctx.arc(boss.x + boss.size / 2, boss.y + boss.size / 2, boss.size / 2, 0, Math.PI * 2);
+                        ctx.fill();
+                        if (boss.laserActive) {
+                            ctx.strokeStyle = '#FF0000';
+                            ctx.lineWidth = 5;
+                            ctx.beginPath();
+                            ctx.moveTo(boss.x + boss.size / 2, boss.y + boss.size);
+                            ctx.lineTo(boss.x + boss.size / 2, canvas.height);
+                            ctx.stroke();
+                        }
+                        break;
+                    case 'splitter':
+                        ctx.fillRect(boss.x, boss.y, boss.size, boss.size);
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.fillRect(boss.x + boss.size / 4, boss.y + boss.size / 4, boss.size / 2, boss.size / 2);
+                        break;
+                    case 'ghost':
+                        ctx.beginPath();
+                        ctx.arc(boss.x + boss.size / 2, boss.y + boss.size / 2, boss.size / 2, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.fillRect(boss.x + boss.size / 4, boss.y + boss.size / 2, boss.size / 2, boss.size / 2);
+                        break;
+                    case 'bomber':
+                        ctx.fillRect(boss.x, boss.y, boss.size, boss.size);
+                        ctx.fillStyle = '#000000';
+                        ctx.fillRect(boss.x + boss.size / 4, boss.y + boss.size, boss.size / 2, 20);
+                        break;
+                    case 'mega':
+                        ctx.beginPath();
+                        ctx.arc(boss.x + boss.size / 2, boss.y + boss.size / 2, boss.size / 2, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.fillRect(boss.x + boss.size / 4, boss.y, 20, boss.size);
+                        ctx.fillRect(boss.x + boss.size / 2, boss.y, 20, boss.size);
+                        break;
+                }
             });
             upgrades.forEach(upgrade => {
                 ctx.fillStyle = upgrade.type === 'gun' ? '#FF00FF' : upgrade.type === 'ship' ? '#00FF00' : upgrade.type === 'shield' ? '#00FFFF' : upgrade.type === 'speed' ? '#FFFF00' : '#FF4500';
@@ -1143,726 +1298,840 @@
                 ctx.fill();
                 ctx.fillRect(ghost.x + 5, ghost.y + 10, 10, 10);
             });
+            fireworks.forEach(fw => {
+                ctx.fillStyle = fw.color;
+                ctx.beginPath();
+                ctx.arc(fw.x, fw.y, fw.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
 
-            if (player.shield > 0) {
-                ctx.strokeStyle = '#00FFFF';
+            if (player.shield > 0) {            ctx.strokeStyle = '#00FFFF';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.size / 2 + 5, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        if (gameCompleted) {
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = '40px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Congratulations! You Conquered All 50 Levels!', canvas.width / 2, canvas.height / 2 - 20);
+            ctx.font = '20px Arial';
+            ctx.fillText('Enjoy the Fireworks & 10,000 Coin Bonus!', canvas.width / 2, canvas.height / 2 + 20);
+        }
+    }
+
+    function drawPlayer() {
+        ctx.fillStyle = document.getElementById('player-color')?.value || document.getElementById('ship-color')?.value || '#FFFF00';
+        switch (player.shipType) {
+            case 'default':
+                ctx.beginPath();
+                ctx.moveTo(player.x, player.y - player.size / 2);
+                ctx.lineTo(player.x - player.size / 2, player.y + player.size / 2);
+                ctx.lineTo(player.x + player.size / 2, player.y + player.size / 2);
+                ctx.fill();
+                break;
+            case 'car':
+                ctx.fillRect(player.x - player.size / 2, player.y - player.size / 4, player.size, player.size / 2);
+                ctx.fillStyle = '#000000';
+                ctx.beginPath();
+                ctx.arc(player.x - player.size / 4, player.y + player.size / 4, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(player.x + player.size / 4, player.y + player.size / 4, 5, 0, Math.PI * 2);
+                ctx.fill();
+                break;
+            case 'plane':
+                ctx.beginPath();
+                ctx.moveTo(player.x, player.y - player.size / 2);
+                ctx.lineTo(player.x - player.size / 2, player.y + player.size / 2);
+                ctx.lineTo(player.x + player.size / 2, player.y + player.size / 2);
+                ctx.fill();
+                ctx.save();
+                ctx.translate(player.x, player.y - player.size / 2);
+                ctx.rotate(player.propellerAngle);
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(-10, -2, 20, 4);
+                ctx.restore();
+                break;
+            case 'ufo':
+                ctx.beginPath();
+                ctx.arc(player.x, player.y, player.size / 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = `hsl(0, 100%, ${50 + Math.sin(player.lightAngle) * 20}%)`;
+                ctx.beginPath();
+                ctx.arc(player.x, player.y + player.size / 4, 10, 0, Math.PI * 2);
+                ctx.fill();
+                break;
+            case 'spaceship':
+                ctx.beginPath();
+                ctx.moveTo(player.x, player.y - player.size / 2);
+                ctx.lineTo(player.x - player.size / 2, player.y + player.size / 2);
+                ctx.lineTo(player.x + player.size / 2, player.y + player.size / 2);
+                ctx.fill();
+                ctx.fillStyle = '#FF4500';
+                ctx.fillRect(player.x - 5, player.y + player.size / 2, 10, 10 + player.flameOffset);
+                break;
+            case 'tank':
+                ctx.fillRect(player.x - player.size / 2, player.y - player.size / 4, player.size, player.size / 2);
+                ctx.fillStyle = '#333333';
+                ctx.fillRect(player.x - 5, player.y - player.size / 2 - 5, 10, 20);
+                break;
+            case 'dragon':
+                ctx.beginPath();
+                ctx.moveTo(player.x, player.y - player.size / 2);
+                ctx.lineTo(player.x - player.size / 2, player.y + player.size / 2);
+                ctx.lineTo(player.x + player.size / 2, player.y + player.size / 2);
+                ctx.fill();
+                ctx.fillStyle = '#FF4500';
+                ctx.save();
+                ctx.translate(player.x - player.size / 2, player.y);
+                ctx.rotate(player.flapAngle);
+                ctx.fillRect(0, -10, 20, 5);
+                ctx.restore();
+                ctx.save();
+                ctx.translate(player.x + player.size / 2, player.y);
+                ctx.rotate(-player.flapAngle);
+                ctx.fillRect(-20, -10, 20, 5);
+                ctx.restore();
+                break;
+            case 'cruiser':
+                ctx.fillRect(player.x - player.size / 2, player.y - player.size / 2, player.size, player.size);
+                ctx.fillStyle = '#FFFFFF';
+                ctx.beginPath();
+                ctx.arc(player.x, player.y - player.size / 4, 10, 0, Math.PI * 2);
+                ctx.fill();
+                break;
+            case 'bomber':
+                ctx.fillRect(player.x - player.size / 2, player.y - player.size / 4, player.size, player.size / 2);
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(player.x - 5, player.y + player.size / 4, 10, 10);
+                break;
+            case 'pirate':
+                ctx.beginPath();
+                ctx.moveTo(player.x, player.y - player.size / 2);
+                ctx.lineTo(player.x - player.size / 2, player.y + player.size / 2);
+                ctx.lineTo(player.x + player.size / 2, player.y + player.size / 2);
+                ctx.fill();
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath();
+                ctx.arc(player.x, player.y, 5, 0, Math.PI * 2);
+                ctx.fill();
+                break;
+            case 'scout':
+                ctx.beginPath();
+                ctx.arc(player.x, player.y, player.size / 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#00FF00';
                 ctx.lineWidth = 2;
                 ctx.beginPath();
-                ctx.arc(player.x, player.y, player.size / 2 + 5, 0, Math.PI * 2);
+                ctx.arc(player.x, player.y, player.size / 2 + 5 + Math.sin(player.frameCount * 0.1) * 5, 0, Math.PI * 2);
                 ctx.stroke();
-            }
-
-            ctx.fillStyle = '#FFFFFF';
-            ctx.font = '20px Arial';
-            ctx.fillText(`Lives: ${player.lives}`, canvas.width - 50, 30);
+                break;
         }
+    }
 
-        function drawPlayer() {
-            ctx.fillStyle = document.getElementById('player-color')?.value || document.getElementById('ship-color').value || '#FFFF00';
-            switch (player.shipType) {
-                case 'car':
-                    ctx.fillRect(player.x - player.size / 2, player.y - player.size / 2, player.size, player.size);
-                    ctx.fillStyle = '#000000';
-                    ctx.beginPath();
-                    ctx.arc(player.x - player.size / 3, player.y + player.size / 2 + 5, 5, 0, Math.PI * 2);
-                    ctx.arc(player.x + player.size / 3, player.y + player.size / 2 + 5, 5, 0, Math.PI * 2);
-                    ctx.fill();
+    function gameLoop() {
+        if (!isPaused) {
+            player.frameCount++;
+            update();
+            draw();
+        }
+        requestAnimationFrame(gameLoop);
+    }
+
+    function checkCollision(obj, isEnemy = true) {
+        const dx = player.x - (obj.x + obj.size / 2);
+        const dy = player.y - (obj.y + obj.size / 2);
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < player.size / 2 + obj.size / 2) {
+            if (isEnemy && !isInvincible) damagePlayer(1);
+            return true;
+        }
+        return false;
+    }
+
+    function damagePlayer(amount) {
+        if (player.shield > 0) {
+            player.shield -= amount * 10;
+            return;
+        }
+        player.lives -= amount;
+        if (player.lives <= 0) {
+            gameOver = true;
+            backgroundMusic.pause();
+            playSound('death');
+            finalScore.textContent = `Final Score: ${score}`;
+            gameOverMenu.style.display = 'block';
+            canvas.style.display = 'none';
+            scoreDisplay.style.display = 'none';
+            levelDisplay.style.display = 'none';
+            coinsDisplay.style.display = 'none';
+            controlBar.style.display = 'none';
+            joystick.style.display = 'none';
+            shootBtn.style.display = 'none';
+        }
+    }
+
+    function playSound(type) {
+        if (!isMuted) {
+            sounds[type].volume = gameVolume;
+            sounds[type].currentTime = 0;
+            sounds[type].play();
+        }
+    }
+
+    function toggleMute() {
+        isMuted = !isMuted;
+        soundBtn.textContent = isMuted ? '🔇' : '🔊';
+        soundBtn.classList.toggle('muted', isMuted);
+        backgroundMusic.volume = isMuted ? 0 : musicVolume;
+        Object.values(sounds).forEach(sound => sound.volume = isMuted ? 0 : gameVolume);
+    }
+
+    function pauseGame() {
+        isPaused = !isPaused;
+        pauseMenu.style.display = isPaused ? 'block' : 'none';
+        document.getElementById('pause-resume-btn').textContent = isPaused ? '▶️' : '⏸️';
+        if (!isPaused) backgroundMusic.play();
+        else backgroundMusic.pause();
+    }
+
+    function resumeGame() {
+        isPaused = false;
+        pauseMenu.style.display = 'none';
+        document.getElementById('pause-resume-btn').textContent = '⏸️';
+        backgroundMusic.play();
+    }
+
+    function restartGame() {
+        gameOver = false;
+        score = 0;
+        level = 1;
+        player.lives = 3;
+        player.x = canvas.width / 2;
+        player.y = canvas.height - 50;
+        player.shield = 0;
+        player.bulletCount = 1;
+        player.speed = 5;
+        player.fireRate = 20;
+        bullets = [];
+        pacmen = [];
+        bosses = [];
+        upgrades = [];
+        explosions = [];
+        ghosts = [];
+        fireworks = [];
+        gameCompleted = false;
+        canvas.style.display = 'block';
+        scoreDisplay.style.display = 'block';
+        levelDisplay.style.display = 'block';
+        coinsDisplay.style.display = 'block';
+        controlBar.style.display = 'flex';
+        gameOverMenu.style.display = 'none';
+        if (isMobile()) {
+            joystick.style.display = 'block';
+            shootBtn.style.display = 'block';
+        }
+        initLevel();
+        backgroundMusic.play();
+    }
+
+    function checkAchievements() {
+        for (const key in achievements) {
+            if (!achievements[key].unlocked && achievements[key].count >= achievementRequirements[key]) {
+                achievements[key].unlocked = true;
+                showMessage(`Achievement Unlocked: ${achievements[key].name}`);
+            }
+        }
+        if (level >= maxLevel && !achievements.levelMaster.unlocked) {
+            achievements.levelMaster.unlocked = true;
+            achievements.levelMaster.count = maxLevel;
+            showMessage('Achievement Unlocked: Level Master');
+        }
+    }
+
+    function applyUpgrade(type) {
+        switch (type) {
+            case 'gun':
+                player.bulletCount = Math.min(player.bulletCount + 1, 3);
+                showMessage('Upgrade: Multi-Shot!');
+                break;
+            case 'ship':
+                player.shipLevel++;
+                showMessage('Upgrade: Ship Enhanced!');
+                break;
+            case 'shield':
+                player.shield = 100;
+                showMessage('Upgrade: Shield Activated!');
+                break;
+            case 'speed':
+                player.speed += 2;
+                showMessage('Upgrade: Speed Boost!');
+                break;
+            case 'multi':
+                player.fireRate = Math.max(5, player.fireRate - 5);
+                showMessage('Upgrade: Faster Fire Rate!');
+                break;
+        }
+    }
+
+    function triggerVictory() {
+        gameCompleted = true;
+        player.coins += 10000;
+        coinsDisplay.textContent = `Coins: ${player.coins}`;
+        showMessage('Victory! All 50 Levels Conquered - 10,000 Coins Awarded!');
+    }
+
+    function showSettings() {
+        menu.style.display = 'none';
+        settingsMenu.style.display = 'block';
+        document.getElementById('game-volume').value = gameVolume;
+        document.getElementById('music-volume').value = musicVolume;
+        document.getElementById('ai-enemies').checked = useAIEnemies;
+    }
+
+    function saveSettings() {
+        gameVolume = parseFloat(document.getElementById('game-volume').value);
+        musicVolume = parseFloat(document.getElementById('music-volume').value);
+        backgroundMusic.volume = isMuted ? 0 : musicVolume;
+        useAIEnemies = document.getElementById('ai-enemies').checked;
+        applyTheme();
+        backToMenu();
+    }
+
+    function backToMenu() {
+        settingsMenu.style.display = 'none';
+        menu.style.display = 'block';
+    }
+
+    function showSettingsFromGameOver() {
+        gameOverMenu.style.display = 'none';
+        settingsMenu.style.display = 'block';
+    }
+
+    function showSettingsFromPause() {
+        pauseMenu.style.display = 'none';
+        settingsMenu.style.display = 'block';
+    }
+
+    function backToMainMenu() {
+        gameOverMenu.style.display = 'none';
+        menu.style.display = 'block';
+        canvas.style.display = 'none';
+        scoreDisplay.style.display = 'none';
+        levelDisplay.style.display = 'none';
+        coinsDisplay.style.display = 'none';
+        controlBar.style.display = 'none';
+        joystick.style.display = 'none';
+        shootBtn.style.display = 'none';
+    }
+
+    function backToMainMenuFromPause() {
+        pauseMenu.style.display = 'none';
+        menu.style.display = 'block';
+        canvas.style.display = 'none';
+        scoreDisplay.style.display = 'none';
+        levelDisplay.style.display = 'none';
+        coinsDisplay.style.display = 'none';
+        controlBar.style.display = 'none';
+        joystick.style.display = 'none';
+        shootBtn.style.display = 'none';
+        isPaused = false;
+    }
+
+    function showLeaderboard(section) {
+        const leaderboardDiv = document.getElementById(`leaderboard-${section}`);
+        leaderboardDiv.style.display = 'block';
+        let scores = JSON.parse(localStorage.getItem('leaderboard')) || [];
+        leaderboardDiv.innerHTML = '<h3>Leaderboard</h3>' + scores.map(s => `${s.name}: ${s.score}`).join('<br>');
+    }
+
+    function saveScore() {
+        let scores = JSON.parse(localStorage.getItem('leaderboard')) || [];
+        const playerName = localStorage.getItem('playerName') || 'Player';
+        scores.push({ name: playerName, score: score });
+        scores.sort((a, b) => b.score - a.score);
+        scores = scores.slice(0, 10);
+        localStorage.setItem('leaderboard', JSON.stringify(scores));
+    }
+
+    function shareScore() {
+        saveScore();
+        const text = `I scored ${score} in Space Pac-Invaders! Can you beat me?`;
+        if (navigator.share) {
+            navigator.share({ title: 'Space Pac-Invaders', text: text, url: window.location.href });
+        } else {
+            prompt('Copy this to share your score:', text);
+        }
+    }
+
+    function copyScore() {
+        saveScore();
+        const text = `I scored ${score} in Space Pac-Invaders! Can you beat me? Challenge code: ${score}`;
+        navigator.clipboard.writeText(text).then(() => alert('Score copied to clipboard!'));
+    }
+
+    function isMobile() {
+        return /Mobi|Android/i.test(navigator.userAgent);
+    }
+
+    function changeTheme() {
+        const theme = document.getElementById('theme-select').value;
+        applyTheme(theme);
+    }
+
+    function applyTheme(theme = document.getElementById('theme-select').value) {
+        const customTheme = document.getElementById('custom-theme');
+        if (customTheme.style.display === 'block') {
+            document.body.style.backgroundColor = document.getElementById('bg-color').value;
+            canvas.style.borderColor = document.getElementById('border-color').value;
+            document.querySelectorAll('button').forEach(btn => btn.style.backgroundColor = document.getElementById('button-color').value);
+            document.querySelectorAll('#menu, #settings-menu, #game-over-menu, #pause-menu, #achievements-menu, #shop-menu, #debug-menu, #tutorial-menu')
+                .forEach(menu => menu.style.backgroundColor = document.getElementById('menu-color').value);
+            document.querySelectorAll('label, #score, #level, #coins, .shop-item-name').forEach(el => el.style.color = document.getElementById('text-color').value);
+        } else {
+            switch (theme) {
+                case 'retro':
+                    document.body.style.backgroundColor = '#000000';
+                    canvas.style.borderColor = '#00FF00';
+                    document.querySelectorAll('button').forEach(btn => btn.style.backgroundColor = '#00FF00');
                     break;
-                case 'plane':
-                    ctx.beginPath();
-                    ctx.moveTo(player.x, player.y - player.size / 2);
-                    ctx.lineTo(player.x - player.size / 2, player.y + player.size / 2);
-                    ctx.lineTo(player.x + player.size / 2, player.y + player.size / 2);
-                    ctx.fill();
-                    ctx.fillStyle = '#000000';
-                    ctx.save();
-                    ctx.translate(player.x, player.y - player.size / 2);
-                    ctx.rotate(player.propellerAngle);
-                    ctx.fillRect(-10, -2, 20, 4);
-                    ctx.restore();
-                    break;
-                case 'ufo':
-                    ctx.beginPath();
-                    ctx.ellipse(player.x, player.y, player.size / 2, player.size / 4, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.fillStyle = `hsl(${player.lightAngle * 100 % 360}, 100%, 50%)`;
-                    ctx.beginPath();
-                    ctx.arc(player.x, player.y + 5, 5, 0, Math.PI * 2);
-                    ctx.fill();
-                    break;
-                case 'spaceship':
-                    ctx.beginPath();
-                    ctx.moveTo(player.x, player.y - player.size / 2);
-                    ctx.lineTo(player.x - player.size / 2, player.y + player.size / 2);
-                    ctx.lineTo(player.x + player.size / 2, player.y + player.size / 2);
-                    ctx.fill();
-                    ctx.fillStyle = '#FF4500';
-                    ctx.beginPath();
-                    ctx.moveTo(player.x - player.size / 4, player.y + player.size / 2 + player.flameOffset);
-                    ctx.lineTo(player.x + player.size / 4, player.y + player.size / 2 + player.flameOffset);
-                    ctx.lineTo(player.x, player.y + player.size / 2 + 10 + player.flameOffset);
-                    ctx.fill();
-                    break;
-                case 'tank':
-                    ctx.fillRect(player.x - player.size / 2, player.y - player.size / 4, player.size, player.size / 2);
-                    ctx.fillStyle = '#333333';
-                    ctx.fillRect(player.x - player.size / 4, player.y - player.size / 2, player.size / 2, player.size / 4);
-                    break;
-                case 'dragon':
-                    ctx.beginPath();
-                    ctx.moveTo(player.x, player.y - player.size / 2);
-                    ctx.lineTo(player.x - player.size / 2, player.y + player.size / 2);
-                    ctx.lineTo(player.x + player.size / 2, player.y + player.size / 2);
-                    ctx.fill();
-                    ctx.fillStyle = '#FF4500';
-                    ctx.save();
-                    ctx.translate(player.x - player.size / 2, player.y);
-                    ctx.rotate(player.flapAngle);
-                    ctx.fillRect(0, -10, 20, 10);
-                    ctx.restore();
-                    break;
-                case 'cruiser':
-                    ctx.fillRect(player.x - player.size / 2, player.y - player.size / 2, player.size, player.size);
-                    ctx.fillStyle = '#FF0000';
-                    ctx.beginPath();
-                    ctx.arc(player.x, player.y - player.size / 2 - 5, 10, 0, Math.PI * 2);
-                    ctx.fill();
-                    break;
-                case 'bomber':
-                    ctx.beginPath();
-                    ctx.moveTo(player.x, player.y - player.size / 2);
-                    ctx.lineTo(player.x - player.size / 2, player.y + player.size / 2);
-                    ctx.lineTo(player.x + player.size / 2, player.y + player.size / 2);
-                    ctx.fill();
-                    ctx.fillStyle = '#000000';
-                    ctx.fillRect(player.x - player.size / 4, player.y + player.size / 4, player.size / 2, player.size / 4);
-                    break;
-                case 'pirate':
-                    ctx.beginPath();
-                    ctx.moveTo(player.x, player.y - player.size / 2);
-                    ctx.lineTo(player.x - player.size / 2, player.y + player.size / 2);
-                    ctx.lineTo(player.x + player.size / 2, player.y + player.size / 2);
-                    ctx.fill();
-                    ctx.fillStyle = '#FFD700';
-                    ctx.beginPath();
-                    ctx.arc(player.x, player.y, 5, 0, Math.PI * 2);
-                    ctx.fill();
-                    break;
-                case 'scout':
-                    ctx.beginPath();
-                    ctx.moveTo(player.x, player.y - player.size / 2);
-                    ctx.lineTo(player.x - player.size / 2, player.y + player.size / 2);
-                    ctx.lineTo(player.x + player.size / 2, player.y + player.size / 2);
-                    ctx.fill();
+                case 'neon':
+                    document.body.style.backgroundColor = '#000033';
+                    canvas.style.borderColor = '#FF00FF';
+                    document.querySelectorAll('button').forEach(btn => btn.style.backgroundColor = '#FF00FF');
                     break;
                 default:
-                    ctx.beginPath();
-                    ctx.moveTo(player.x, player.y - player.size / 2);
-                    ctx.lineTo(player.x - player.size / 2, player.y + player.size / 2);
-                    ctx.lineTo(player.x + player.size / 2, player.y + player.size / 2);
-                    ctx.fill();
+                    document.body.style.backgroundColor = '#000000';
+                    canvas.style.borderColor = '#00FFFF';
+                    document.querySelectorAll('button').forEach(btn => btn.style.backgroundColor = '#00FFFF');
             }
         }
+    }
 
-        function gameLoop() {
-            if (!isPaused) {
-                player.frameCount++;
-                update();
-                draw();
-            }
-            requestAnimationFrame(gameLoop);
+    function uploadBackgroundImage() {
+        const file = document.getElementById('bg-image-input').files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                backgroundImage = new Image();
+                backgroundImage.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
         }
+    }
 
-        function playSound(sound) {
-            if (!isMuted) {
-                sounds[sound].volume = gameVolume;
-                sounds[sound].currentTime = 0;
-                sounds[sound].play();
-            }
+    function uploadBackgroundMusic() {
+        const file = document.getElementById('bg-music-input').files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                backgroundMusic.src = e.target.result;
+                backgroundMusic.play();
+            };
+            reader.readAsDataURL(file);
         }
+    }
 
-        function toggleMute() {
-            isMuted = !isMuted;
-            soundBtn.textContent = isMuted ? '🔇' : '🔊';
-            soundBtn.classList.toggle('muted');
-            backgroundMusic.volume = isMuted ? 0 : musicVolume;
+    function changeMusic() {
+        backgroundMusic.src = document.getElementById('music-select').value;
+        backgroundMusic.play();
+    }
+
+    function uploadSound(type) {
+        const file = document.getElementById(`${type}-sound`).files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                sounds[type].src = e.target.result;
+            };
+            reader.readAsDataURL(file);
         }
+    }
 
-        function pauseGame() {
-            isPaused = !isPaused;
-            pauseMenu.style.display = isPaused ? 'block' : 'none';
-            document.getElementById('pause-resume-btn').textContent = isPaused ? '▶️' : '⏸️';
-            if (!isPaused) resumeGame();
-        }
-
-        function resumeGame() {
-            isPaused = false;
-            pauseMenu.style.display = 'none';
-            document.getElementById('pause-resume-btn').textContent = '⏸️';
-        }
-
-        function restartGame() {
-            gameOver = false;
-            score = 0;
-            level = 1;
-            player.lives = 3;
-            player.x = canvas.width / 2;
-            player.y = canvas.height - 50;
-            player.shield = 0;
-            bullets = [];
-            pacmen = [];
-            bosses = [];
-            upgrades = [];
-            explosions = [];
-            ghosts = [];
-            gameOverMenu.style.display = 'none';
-            initLevel();
-        }
-
-        function showSettings() {
-            menu.style.display = 'none';
-            settingsMenu.style.display = 'block';
-            document.getElementById('game-volume').value = gameVolume;
-            document.getElementById('music-volume').value = musicVolume;
-            document.getElementById(            'ai-enemies').checked = useAIEnemies;
-        }
-
-        function saveSettings() {
-            gameVolume = parseFloat(document.getElementById('game-volume').value);
-            musicVolume = parseFloat(document.getElementById('music-volume').value);
-            backgroundMusic.volume = isMuted ? 0 : musicVolume;
-            useAIEnemies = document.getElementById('ai-enemies').checked;
-            applyTheme();
-            backToMenu();
-        }
-
-        function backToMenu() {
-            settingsMenu.style.display = 'none';
-            menu.style.display = 'block';
-        }
-
-        function showSettingsFromGameOver() {
-            gameOverMenu.style.display = 'none';
-            settingsMenu.style.display = 'block';
-        }
-
-        function showSettingsFromPause() {
-            pauseMenu.style.display = 'none';
-            settingsMenu.style.display = 'block';
-        }
-
-        function backToMainMenu() {
-            gameOverMenu.style.display = 'none';
-            menu.style.display = 'block';
-            canvas.style.display = 'none';
-            scoreDisplay.style.display = 'none';
-            levelDisplay.style.display = 'none';
-            coinsDisplay.style.display = 'none';
-            controlBar.style.display = 'none';
-            joystick.style.display = 'none';
-            shootBtn.style.display = 'none';
-        }
-
-        function backToMainMenuFromPause() {
-            pauseMenu.style.display = 'none';
-            menu.style.display = 'block';
-            canvas.style.display = 'none';
-            scoreDisplay.style.display = 'none';
-            levelDisplay.style.display = 'none';
-            coinsDisplay.style.display = 'none';
-            controlBar.style.display = 'none';
-            joystick.style.display = 'none';
-            shootBtn.style.display = 'none';
-            isPaused = false;
-        }
-
-        function showLeaderboard(section) {
-            const leaderboardDiv = document.getElementById(`leaderboard-${section}`);
-            leaderboardDiv.style.display = 'block';
-            let scores = JSON.parse(localStorage.getItem('leaderboard')) || [];
-            leaderboardDiv.innerHTML = '<h3>Leaderboard</h3>' + scores.map(s => `${s.name}: ${s.score}`).join('<br>');
-        }
-
-        function saveScore() {
-            let scores = JSON.parse(localStorage.getItem('leaderboard')) || [];
-            const playerName = localStorage.getItem('playerName') || 'Player';
-            scores.push({ name: playerName, score: score });
-            scores.sort((a, b) => b.score - a.score);
-            scores = scores.slice(0, 10);
-            localStorage.setItem('leaderboard', JSON.stringify(scores));
-        }
-
-        function shareScore() {
-            saveScore();
-            const text = `I scored ${score} in Space Pac-Invaders! Can you beat me?`;
-            if (navigator.share) {
-                navigator.share({ title: 'Space Pac-Invaders', text: text, url: window.location.href });
-            } else {
-                prompt('Copy this to share your score:', text);
-            }
-        }
-
-        function copyScore() {
-            saveScore();
-            const text = `I scored ${score} in Space Pac-Invaders! Can you beat me? Challenge code: ${score}`;
-            navigator.clipboard.writeText(text).then(() => alert('Score copied to clipboard!'));
-        }
-
-        function isMobile() {
-            return /Mobi|Android/i.test(navigator.userAgent);
-        }
-
-        function changeTheme() {
-            const theme = document.getElementById('theme-select').value;
-            applyTheme(theme);
-        }
-
-        function applyTheme(theme = document.getElementById('theme-select').value) {
-            const customTheme = document.getElementById('custom-theme');
-            if (customTheme.style.display === 'block') {
-                document.body.style.backgroundColor = document.getElementById('bg-color').value;
-                canvas.style.borderColor = document.getElementById('border-color').value;
-                document.querySelectorAll('button').forEach(btn => btn.style.backgroundColor = document.getElementById('button-color').value);
-                document.querySelectorAll('#menu, #settings-menu, #game-over-menu, #pause-menu, #achievements-menu, #shop-menu, #debug-menu, #tutorial-menu')
-                    .forEach(menu => menu.style.backgroundColor = document.getElementById('menu-color').value);
-                document.querySelectorAll('label, #score, #level, #coins, .shop-item-name').forEach(el => el.style.color = document.getElementById('text-color').value);
-            } else {
-                switch (theme) {
-                    case 'retro':
-                        document.body.style.backgroundColor = '#000000';
-                        canvas.style.borderColor = '#00FF00';
-                        document.querySelectorAll('button').forEach(btn => btn.style.backgroundColor = '#00FF00');
-                        break;
-                    case 'neon':
-                        document.body.style.backgroundColor = '#000033';
-                        canvas.style.borderColor = '#FF00FF';
-                        document.querySelectorAll('button').forEach(btn => btn.style.backgroundColor = '#FF00FF');
-                        break;
-                    default:
-                        document.body.style.backgroundColor = '#000000';
-                        canvas.style.borderColor = '#00FFFF';
-                        document.querySelectorAll('button').forEach(btn => btn.style.backgroundColor = '#00FFFF');
+    function redeemCode() {
+        const code = document.getElementById('code-input').value.toLowerCase();
+        switch (code) {
+            case 'gekyume':
+                document.getElementById('premium-options').style.display = 'block';
+                document.getElementById('bg-image-input').disabled = false;
+                document.getElementById('bg-music-input').disabled = false;
+                document.getElementById('custom-theme').style.display = 'block';
+                alert('Premium features unlocked!');
+                break;
+            case 'philo debug':
+                debugToggleBtn.style.display = 'block';
+                alert('Debug menu unlocked!');
+                break;
+            case 'easteregg':
+                shipTypes.push({ name: 'secret', value: 'secret', desc: 'Secret Ship - Surprise!' });
+                updateShipSelect();
+                alert('Secret ship unlocked!');
+                break;
+            case '5ship':
+                for (let i = 0; i < 5; i++) {
+                    shipTypes.push({ name: `random${i}`, value: `random${i}`, desc: `Random Ship ${i}` });
                 }
-            }
+                updateShipSelect();
+                alert('5 random ships unlocked!');
+                break;
+            case '5fonts':
+                document.getElementById('font-select').innerHTML += `
+                    <option value="Georgia">Georgia</option>
+                    <option value="Verdana">Verdana</option>
+                    <option value="Helvetica">Helvetica</option>
+                `;
+                alert('Extra fonts unlocked!');
+                break;
+            case '5themes':
+                document.getElementById('theme-select').innerHTML += `
+                    <option value="space">Space</option>
+                    <option value="ocean">Ocean</option>
+                    <option value="forest">Forest</option>
+                `;
+                alert('Extra themes unlocked!');
+                break;
+            case '5games':
+                document.getElementById('game-mode-select').innerHTML += `
+                    <option value="timeattack">Time Attack</option>
+                    <option value="hardcore">Hardcore</option>
+                `;
+                alert('Extra game modes unlocked!');
+                break;
+            default:
+                alert('Invalid code!');
         }
+    }
 
-        function uploadBackgroundImage() {
-            const file = document.getElementById('bg-image-input').files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    backgroundImage = new Image();
-                    backgroundImage.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
+    function updateShipSelect() {
+        shipSelect.innerHTML = '';
+        pauseShipSelect.innerHTML = '';
+        shipTypes.forEach(ship => {
+            const option = document.createElement('option');
+            option.value = ship.value;
+            option.textContent = ship.desc;
+            shipSelect.appendChild(option);
+            pauseShipSelect.appendChild(option.cloneNode(true));
+        });
+    }
+
+    function changeShip() {
+        player.shipType = shipSelect.value;
+        document.getElementById('pause-ship-select').value = player.shipType;
+    }
+
+    function changeShipFromPause() {
+        player.shipType = document.getElementById('pause-ship-select').value;
+        shipSelect.value = player.shipType;
+    }
+
+    function updateBulletLetter() {
+        customBulletLetter = document.getElementById('bullet-letter-input').value || '•';
+        document.getElementById('pause-bullet-letter-input').value = customBulletLetter;
+    }
+
+    function updateBulletLetterFromPause() {
+        customBulletLetter = document.getElementById('pause-bullet-letter-input').value || '•';
+        document.getElementById('bullet-letter-input').value = customBulletLetter;
+    }
+
+    function changeFont() {
+        document.body.style.fontFamily = document.getElementById('font-select').value;
+    }
+
+    function toggleAIEnemies() {
+        useAIEnemies = document.getElementById('ai-enemies').checked;
+    }
+
+    function changeGameMode() {
+        gameMode = document.getElementById('game-mode-select').value;
+        restartGame();
+    }
+
+    function showMessage(message) {
+        messageDisplay.textContent = message;
+        messageDisplay.style.display = 'block';
+        setTimeout(() => messageDisplay.style.display = 'none', 3000);
+    }
+
+    function spawnGhost() {
+        if (Math.random() < 0.01) {
+            ghosts.push({
+                x: Math.random() * (canvas.width - 20),
+                y: -20,
+                speed: 2
+            });
         }
+    }
 
-        function uploadBackgroundMusic() {
-            const file = document.getElementById('bg-music-input').files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    backgroundMusic.src = e.target.result;
-                    backgroundMusic.play();
-                };
-                reader.readAsDataURL(file);
-            }
+    function dropBomb() {
+        if (player.bombCooldown <= 0) {
+            bullets.push({ x: player.x, y: player.y + player.size / 2, speed: -player.bulletSpeed / 2 });
+            player.bombCooldown = 50;
         }
+    }
 
-        function changeMusic() {
-            backgroundMusic.src = document.getElementById('music-select').value;
-            backgroundMusic.play();
+    function activateRadar() {
+        pacmen.forEach(pacman => {
+            pacman.speed *= 0.5;
+            setTimeout(() => pacman.speed *= 2, 5000);
+        });
+    }
+
+    function showAchievements() {
+        menu.style.display = 'none';
+        achievementsMenu.style.display = 'block';
+        const list = document.getElementById('achievements-list');
+        list.innerHTML = '';
+        for (const key in achievements) {
+            const ach = achievements[key];
+            list.innerHTML += `${ach.name}: ${ach.desc} - ${ach.unlocked ? 'Unlocked' : `${ach.count}/${achievementRequirements[key]}`}<br>`;
         }
+    }
 
-        function uploadSound(type) {
-            const file = document.getElementById(`${type}-sound`).files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    sounds[type].src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        }
+    function backToMenuFromAchievements() {
+        achievementsMenu.style.display = 'none';
+        menu.style.display = 'block';
+    }
 
-        function redeemCode() {
-            const code = document.getElementById('code-input').value.toLowerCase();
-            switch (code) {
-                case 'gekyume':
+    function showShop() {
+        menu.style.display = 'none';
+        shopMenu.style.display = 'block';
+        initPaypalButtons();
+    }
+
+    function Savoy() {
+        shopMenu.style.display = 'none';
+        menu.style.display = 'block';
+    }
+
+    function initPaypalButtons() {
+        paypal.Buttons({
+            createOrder: (data, actions) => {
+                return actions.order.create({
+                    purchase_units: [{
+                        amount: { value: prices.premium.toFixed(2) },
+                        description: 'Premium Features for Space Pac-Invaders'
+                    }]
+                });
+            },
+            onApprove: (data, actions) => {
+                return actions.order.capture().then(() => {
                     document.getElementById('premium-options').style.display = 'block';
                     document.getElementById('bg-image-input').disabled = false;
                     document.getElementById('bg-music-input').disabled = false;
                     document.getElementById('custom-theme').style.display = 'block';
                     alert('Premium features unlocked!');
-                    break;
-                case 'philo debug':
-                    debugToggleBtn.style.display = 'block';
-                    alert('Debug menu unlocked!');
-                    break;
-                case 'easteregg':
-                    shipTypes.push({ name: 'secret', value: 'secret', desc: 'Secret Ship - Surprise!' });
-                    updateShipSelect();
-                    alert('Secret ship unlocked!');
-                    break;
-                case '5ship':
-                    for (let i = 0; i < 5; i++) {
-                        shipTypes.push({ name: `random${i}`, value: `random${i}`, desc: `Random Ship ${i}` });
-                    }
-                    updateShipSelect();
-                    alert('5 random ships unlocked!');
-                    break;
-                case '5fonts':
-                    document.getElementById('font-select').innerHTML += `
-                        <option value="Georgia">Georgia</option>
-                        <option value="Verdana">Verdana</option>
-                        <option value="Helvetica">Helvetica</option>
-                    `;
-                    alert('Extra fonts unlocked!');
-                    break;
-                case '5themes':
-                    document.getElementById('theme-select').innerHTML += `
-                        <option value="space">Space</option>
-                        <option value="ocean">Ocean</option>
-                        <option value="forest">Forest</option>
-                    `;
-                    alert('Extra themes unlocked!');
-                    break;
-                case '5games':
-                    document.getElementById('game-mode-select').innerHTML += `
-                        <option value="timeattack">Time Attack</option>
-                        <option value="hardcore">Hardcore</option>
-                    `;
-                    alert('Extra game modes unlocked!');
-                    break;
-                default:
-                    alert('Invalid code!');
-            }
-        }
-
-        function updateShipSelect() {
-            shipSelect.innerHTML = '';
-            pauseShipSelect.innerHTML = '';
-            shipTypes.forEach(ship => {
-                const option = document.createElement('option');
-                option.value = ship.value;
-                option.textContent = ship.desc;
-                shipSelect.appendChild(option);
-                pauseShipSelect.appendChild(option.cloneNode(true));
-            });
-        }
-
-        function changeShip() {
-            player.shipType = shipSelect.value;
-            document.getElementById('pause-ship-select').value = player.shipType;
-        }
-
-        function changeShipFromPause() {
-            player.shipType = document.getElementById('pause-ship-select').value;
-            shipSelect.value = player.shipType;
-        }
-
-        function updateBulletLetter() {
-            customBulletLetter = document.getElementById('bullet-letter-input').value || '•';
-            document.getElementById('pause-bullet-letter-input').value = customBulletLetter;
-        }
-
-        function updateBulletLetterFromPause() {
-            customBulletLetter = document.getElementById('pause-bullet-letter-input').value || '•';
-            document.getElementById('bullet-letter-input').value = customBulletLetter;
-        }
-
-        function changeFont() {
-            document.body.style.fontFamily = document.getElementById('font-select').value;
-        }
-
-        function toggleAIEnemies() {
-            useAIEnemies = document.getElementById('ai-enemies').checked;
-        }
-
-        function changeGameMode() {
-            gameMode = document.getElementById('game-mode-select').value;
-            restartGame();
-        }
-
-        function showMessage(message) {
-            messageDisplay.textContent = message;
-            messageDisplay.style.display = 'block';
-            setTimeout(() => messageDisplay.style.display = 'none', 3000);
-        }
-
-        function spawnGhost() {
-            if (Math.random() < 0.01) {
-                ghosts.push({
-                    x: Math.random() * (canvas.width - 20),
-                    y: -20,
-                    speed: 2
                 });
             }
-        }
+        }).render('#paypal-premium-container');
 
-        function dropBomb() {
-            if (player.bombCooldown <= 0) {
-                bullets.push({ x: player.x, y: player.y + player.size / 2, speed: -player.bulletSpeed / 2 });
-                player.bombCooldown = 50;
-            }
-        }
-
-        function activateRadar() {
-            pacmen.forEach(pacman => {
-                pacman.speed *= 0.5;
-                setTimeout(() => pacman.speed *= 2, 5000);
-            });
-        }
-
-        function showAchievements() {
-            menu.style.display = 'none';
-            achievementsMenu.style.display = 'block';
-            const list = document.getElementById('achievements-list');
-            list.innerHTML = '';
-            for (const key in achievements) {
-                const ach = achievements[key];
-                list.innerHTML += `${ach.name}: ${ach.desc} - ${ach.unlocked ? 'Unlocked' : `${ach.count}/${achievementRequirements[key]}`}<br>`;
-            }
-        }
-
-        function backToMenuFromAchievements() {
-            achievementsMenu.style.display = 'none';
-            menu.style.display = 'block';
-        }
-
-        function showShop() {
-            menu.style.display = 'none';
-            shopMenu.style.display = 'block';
-            initPaypalButtons();
-        }
-
-        function backToMenuFromShop() {
-            shopMenu.style.display = 'none';
-            menu.style.display = 'block';
-        }
-
-        function initPaypalButtons() {
+        const shipContainers = ['car', 'plane', 'ufo', 'spaceship', 'tank', 'dragon', 'cruiser', 'bomber', 'pirate', 'random', 'speedboost', 'shieldpack'];
+        shipContainers.forEach(item => {
             paypal.Buttons({
                 createOrder: (data, actions) => {
+                    const price = item === 'random' ? prices.random : item === 'speedboost' ? prices.speedboost : item === 'shieldpack' ? prices.shieldpack : prices.ship;
                     return actions.order.create({
                         purchase_units: [{
-                            amount: { value: prices.premium.toFixed(2) },
-                            description: 'Premium Features for Space Pac-Invaders'
+                            amount: { value: price.toFixed(2) },
+                            description: `${item.charAt(0).toUpperCase() + item.slice(1)} for Space Pac-Invaders`
                         }]
                     });
                 },
                 onApprove: (data, actions) => {
                     return actions.order.capture().then(() => {
-                        document.getElementById('premium-options').style.display = 'block';
-                        document.getElementById('bg-image-input').disabled = false;
-                        document.getElementById('bg-music-input').disabled = false;
-                        document.getElementById('custom-theme').style.display = 'block';
-                        alert('Premium features unlocked!');
+                        if (item === 'speedboost') {
+                            player.speed *= 2;
+                            alert('Speed Boost purchased!');
+                        } else if (item === 'shieldpack') {
+                            player.shield = 200;
+                            alert('Shield Pack purchased!');
+                        } else {
+                            shipTypes.push({ name: item, value: item, desc: `${item.charAt(0).toUpperCase() + item.slice(1)} Ship` });
+                            updateShipSelect();
+                            alert(`${item.charAt(0).toUpperCase() + item.slice(1)} purchased!`);
+                        }
                     });
                 }
-            }).render('#paypal-premium-container');
+            }).render(`#paypal-${item}-container`);
+        });
+    }
 
-            const shipContainers = ['car', 'plane', 'ufo', 'spaceship', 'tank', 'dragon', 'cruiser', 'bomber', 'pirate', 'random', 'speedboost', 'shieldpack'];
-            shipContainers.forEach(item => {
-                paypal.Buttons({
-                    createOrder: (data, actions) => {
-                        const price = item === 'random' ? prices.random : item === 'speedboost' ? prices.speedboost : item === 'shieldpack' ? prices.shieldpack : prices.ship;
-                        return actions.order.create({
-                            purchase_units: [{
-                                amount: { value: price.toFixed(2) },
-                                description: `${item.charAt(0).toUpperCase() + item.slice(1)} for Space Pac-Invaders`
-                            }]
-                        });
-                    },
-                    onApprove: (data, actions) => {
-                        return actions.order.capture().then(() => {
-                            if (item === 'speedboost') {
-                                player.speed *= 2;
-                                alert('Speed Boost purchased!');
-                            } else if (item === 'shieldpack') {
-                                player.shield = 200;
-                                alert('Shield Pack purchased!');
-                            } else {
-                                shipTypes.push({ name: item, value: item, desc: `${item.charAt(0).toUpperCase() + item.slice(1)} Ship` });
-                                updateShipSelect();
-                                alert(`${item.charAt(0).toUpperCase() + item.slice(1)} purchased!`);
-                            }
-                        });
-                    }
-                }).render(`#paypal-${item}-container`);
-            });
-        }
+    function toggleDebugMenu() {
+        debugMenu.style.display = debugMenu.style.display === 'block' ? 'none' : 'block';
+    }
 
-        function toggleDebugMenu() {
-            debugMenu.style.display = debugMenu.style.display === 'block' ? 'none' : 'block';
-        }
+    function debugAddScore(amount) {
+        score += amount;
+        scoreDisplay.textContent = `Score: ${score}`;
+    }
 
-        function debugAddScore(amount) {
-            score += amount;
-            scoreDisplay.textContent = `Score: ${score}`;
-        }
-
-        function debugNextLevel() {
-            level++;
+    function debugNextLevel() {
+        level++;
+        if (level > maxLevel) {
+            triggerVictory();
+        } else {
             initLevel();
             levelDisplay.textContent = `Level: ${level}`;
         }
+    }
 
-        function debugSpawnUpgrade() {
-            const types = ['gun', 'ship', 'shield', 'speed', 'multi'];
-            upgrades.push({
+    function debugSpawnUpgrade() {
+        const types = ['gun', 'ship', 'shield', 'speed', 'multi'];
+        upgrades.push({
+            x: Math.random() * (canvas.width - 20),
+            y: -20,
+            size: 20,
+            speed: 2,
+            type: types[Math.floor(Math.random() * types.length)]
+        });
+    }
+
+    function debugToggleInvincibility() {
+        isInvincible = !isInvincible;
+        showMessage(`Invincibility: ${isInvincible ? 'ON' : 'OFF'}`);
+    }
+
+    function debugResetGame() {
+        restartGame();
+    }
+
+    function debugMaxBullets() {
+        player.bulletCount = 5;
+    }
+
+    function debugMaxSpeed() {
+        player.speed = 10;
+    }
+
+    function debugInfiniteShield() {
+        player.shield = Infinity;
+    }
+
+    function debugKillAllPacmen() {
+        pacmen = [];
+    }
+
+    function debugSpawnGhosts(count) {
+        for (let i = 0; i < count; i++) {
+            ghosts.push({
                 x: Math.random() * (canvas.width - 20),
                 y: -20,
-                size: 20,
-                speed: 2,
-                type: types[Math.floor(Math.random() * types.length)]
+                speed: 2
             });
         }
+    }
 
-        function debugToggleInvincibility() {
-            isInvincible = !isInvincible;
-            showMessage(`Invincibility: ${isInvincible ? 'ON' : 'OFF'}`);
-        }
+    function debugIncreaseFireRate() {
+        player.fireRate = Math.max(5, player.fireRate - 5);
+    }
 
-        function debugResetGame() {
-            restartGame();
-        }
-
-        function debugMaxBullets() {
-            player.bulletCount = 5;
-        }
-
-        function debugMaxSpeed() {
-            player.speed = 10;
-        }
-
-        function debugInfiniteShield() {
-            player.shield = Infinity;
-        }
-
-        function debugKillAllPacmen() {
-            pacmen = [];
-        }
-
-        function debugSpawnGhosts(count) {
-            for (let i = 0; i < count; i++) {
-                ghosts.push({
-                    x: Math.random() * (canvas.width - 20),
-                    y: -20,
-                    speed: 2
-                });
+    function debugUnlockAllShips() {
+        shipTypes.forEach(ship => {
+            if (!shipSelect.querySelector(`option[value="${ship.value}"]`)) {
+                const option = document.createElement('option');
+                option.value = ship.value;
+                option.textContent = ship.desc;
+                shipSelect.appendChild(option);
+                pauseShipSelect.appendChild(option.cloneNode(true));
             }
-        }
+        });
+    }
 
-        function debugIncreaseFireRate() {
-            player.fireRate = Math.max(5, player.fireRate - 5);
-        }
+    function debugDoubleSize() {
+        player.size *= 2;
+    }
 
-        function debugUnlockAllShips() {
-            shipTypes.forEach(ship => {
-                if (!shipSelect.querySelector(`option[value="${ship.value}"]`)) {
-                    const option = document.createElement('option');
-                    option.value = ship.value;
-                    option.textContent = ship.desc;
-                    shipSelect.appendChild(option);
-                    pauseShipSelect.appendChild(option.cloneNode(true));
-                }
-            });
-        }
+    function debugHalfSize() {
+        player.size /= 2;
+    }
 
-        function debugDoubleSize() {
-            player.size *= 2;
-        }
+    function debugInstantLevel10() {
+        level = 10;
+        initLevel();
+        levelDisplay.textContent = `Level: ${level}`;
+    }
 
-        function debugHalfSize() {
-            player.size /= 2;
-        }
+    function debugSlowEnemies() {
+        pacmen.forEach(p => p.speed /= 2);
+        bosses.forEach(b => b.speed /= 2);
+    }
 
-        function debugInstantLevel10() {
-            level = 10;
-            initLevel();
-            levelDisplay.textContent = `Level: ${level}`;
-        }
+    function debugFastEnemies() {
+        pacmen.forEach(p => p.speed *= 2);
+        bosses.forEach(b => b.speed *= 2);
+    }
 
-        function debugSlowEnemies() {
-            pacmen.forEach(p => p.speed /= 2);
-            bosses.forEach(b => b.speed /= 2);
-        }
+    function debugExtraLives(count) {
+        player.lives += count;
+    }
 
-        function debugFastEnemies() {
-            pacmen.forEach(p => p.speed *= 2);
-            bosses.forEach(b => b.speed *= 2);
+    function debugUnlockAchievements() {
+        for (const key in achievements) {
+            achievements[key].unlocked = true;
+            achievements[key].count = achievementRequirements[key];
         }
+        showMessage('All achievements unlocked!');
+    }
 
-        function debugExtraLives(count) {
-            player.lives += count;
-        }
+    function debugAddCoins(amount) {
+        player.coins += amount;
+        coinsDisplay.textContent = `Coins: ${player.coins}`;
+    }
 
-        function debugUnlockAchievements() {
-            for (const key in achievements) {
-                achievements[key].unlocked = true;
-                achievements[key].count = achievementRequirements[key];
-            }
-            showMessage('All achievements unlocked!');
-        }
+    function showRules() {
+        const rulesSection = document.getElementById('rules-section');
+        rulesSection.style.display = 'block';
+        rulesSection.innerHTML = `
+            <h3>Game Rules</h3>
+            - Use arrow keys (PC) or joystick (mobile) to move.<br>
+            - Spacebar (PC) or shoot button (mobile) to fire.<br>
+            - Avoid Pac-Men and Bosses, or lose lives.<br>
+            - Collect upgrades (colored boxes) for power-ups.<br>
+            - Ghosts give bonus points and coins.<br>
+            - Classic Mode: Clear 50 levels with unique bosses.<br>
+            - Endless Mode: Survive endless waves.<br>
+            - Survival Mode: Increasing difficulty over time.<br>
+            - Earn coins to buy ships and upgrades in the shop.
+        `;
+    }
 
-        function debugAddCoins(amount) {
-            player.coins += amount;
-            coinsDisplay.textContent = `Coins: ${player.coins}`;
-        }
+    function showTutorial() {
+        menu.style.display = 'none';
+        tutorialMenu.style.display = 'block';
+        document.getElementById('tutorial-content').innerHTML = `
+            <h3>Tutorial</h3>
+            1. <strong>Start:</strong> Enter your name and click "Start Game".<br>
+            2. <strong>Move:</strong> Arrow keys (PC) or joystick (mobile).<br>
+            3. <strong>Shoot:</strong> Spacebar (PC) or shoot button (mobile).<br>
+            4. <strong>Objective:</strong> Destroy Pac-Men and Bosses, avoid collisions.<br>
+            5. <strong>Upgrades:</strong> Collect boxes for power-ups (e.g., more bullets, speed).<br>
+            6. <strong>Shop:</strong> Use coins to buy ships with unique abilities.<br>
+            7. <strong>Achievements:</strong> Unlock by completing challenges.<br>
+            8. <strong>Pause:</strong> ESC key (PC) or pause button (top center).
+        `;
+    }
 
-        function showRules() {
-            const rulesSection = document.getElementById('rules-section');
-            rulesSection.style.display = 'block';
-            rulesSection.innerHTML = `
-                <h3>Game Rules</h3>
-                - Use arrow keys (PC) or joystick (mobile) to move.<br>
-                - Spacebar (PC) or shoot button (mobile) to fire.<br>
-                - Avoid Pac-Men and Bosses, or lose lives.<br>
-                - Collect upgrades (colored boxes) for power-ups.<br>
-                - Ghosts give bonus points and coins.<br>
-                - Classic Mode: Clear levels to advance.<br>
-                - Endless Mode: Survive endless waves.<br>
-                - Survival Mode: Increasing difficulty over time.<br>
-                - Earn coins to buy ships and upgrades in the shop.
-            `;
-        }
+    function backToMenuFromTutorial() {
+        tutorialMenu.style.display = 'none';
+        menu.style.display = 'block';
+    }
 
-        function showTutorial() {
-            menu.style.display = 'none';
-            tutorialMenu.style.display = 'block';
-            document.getElementById('tutorial-content').innerHTML = `
-                <h3>Tutorial</h3>
-                1. <strong>Start:</strong> Enter your name and click "Start Game".<br>
-                2. <strong>Move:</strong> Arrow keys (PC) or joystick (mobile).<br>
-                3. <strong>Shoot:</strong> Spacebar (PC) or shoot button (mobile).<br>
-                4. <strong>Objective:</strong> Destroy Pac-Men and Bosses, avoid collisions.<br>
-                5. <strong>Upgrades:</strong> Collect boxes for power-ups (e.g., more bullets, speed).<br>
-                6. <strong>Shop:</strong> Use coins to buy ships with unique abilities.<br>
-                7. <strong>Achievements:</strong> Unlock by completing challenges.<br>
-                8. <strong>Pause:</strong> ESC key (PC) or pause button (top center).
-            `;
-        }
+    function savePrices() {
+        prices.premium = parseFloat(document.getElementById('price-premium').value) || prices.premium;
+        prices.ship = parseFloat(document.getElementById('price-ship').value) || prices.ship;
+        prices.random = parseFloat(document.getElementById('price-random').value) || prices.random;
+        prices.speedboost = parseFloat(document.getElementById('price-speedboost').value) || prices.speedboost;
+        prices.shieldpack = parseFloat(document.getElementById('price-shieldpack').value) || prices.shieldpack;
+        alert('Prices updated!');
+    }
 
-        function backToMenuFromTutorial() {
-            tutorialMenu.style.display = 'none';
-            menu.style.display = 'block';
-        }
-
-        function savePrices() {
-            prices.premium = parseFloat(document.getElementById('price-premium').value) || prices.premium;
-            prices.ship = parseFloat(document.getElementById('price-ship').value) || prices.ship;
-            prices.random = parseFloat(document.getElementById('price-random').value) || prices.random;
-            prices.speedboost = parseFloat(document.getElementById('price-speedboost').value) || prices.speedboost;
-            prices.shieldpack = parseFloat(document.getElementById('price-shieldpack').value) || prices.shieldpack;
-            alert('Prices updated!');
-        }
-
-        // Load saved settings
-        const savedName = localStorage.getItem('playerName');
-        if (savedName) document.getElementById('player-name').value = savedName;
+    // Load saved settings
+    const savedName = localStorage.getItem('playerName');
+    if (savedName) document.getElementById('player-name').value = savedName;
 
     </script>
 </body>
-</html>
+</html>#
